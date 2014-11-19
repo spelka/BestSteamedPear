@@ -1,33 +1,46 @@
-//Listening Thread
-while listening
-    Wait for serial event          // Listening To Serial Event state
-    if received ENQ or RVI
-        send ACK
+/*
+GLOBAL VARIABLES TO2, TO3
 
-        while !EOT	          //loop in the thread that receives packets
-            set timer to TO1 with timeout callback
-            wait for serial event // Waiting for data packet state
-            if !interrupted
-                 set SetTimer() to 0 with a null callback
-                 validate received data// Packet Validation function
-                 if received data is valid
-			   packet accepted
-                     if RVI
-                         send RVI
-                     else
-                         send ACK
-                 else
-                     send NAK
+Booleans : stopWaiting, ackReceived, rviState
 
-//timeout callback
-set interrupted flag to true
-interrupt “wait for serial event”
+		   //Transmit Thread
+		   stopWaiting = ackReceived = rviState = false
+		   Send ENQ
 
-//validate packet data
-if packet syn equals prev_syn
-    discard packet
-    return
-apply CRC on data of the packet
-if CRC result matches received CRC
-    update received buffer’s cursor to signify available data
-    dispatch data received event
+		   //Send ENQ
+		   Set a timer that has the length of TO2 which calls the Reset State function when it ends
+while ACK has not been received and stopWaiting is false
+if the software receives an ACK
+ackReceived = true
+Transmit Mode
+if rviState
+return
+else
+Reset State
+
+//Transmit Mode
+while there is more data AND send_count is less than max_send
+In the case that Send Data returns an ACK :
+more data to send, increment send_count
+
+In the case that Send Data returns an NACK :
+resend data
+timeoutCount++
+
+In the case that Send Data returns an RVI :
+rviState = true
+
+//Send Data
+Take data out of buffer
+add crc to data
+send
+Wait for response
+Return response
+
+
+//Reset State
+stopWaiting = true
+
+if !ackReceived
+Sleep(TO3 + a randomly generated number)
+*/

@@ -55,18 +55,8 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 
 	while (GetMessage(&Msg, NULL, 0, 0))
 	{
-		TranslateMessage(&Msg);
-		DispatchMessage(&Msg);
-		/*if (repaint == true)
-		{
-		hdc = GetDC(hwnd);
-		GetTextMetrics(hdc, &tm);
-		writeToScreen(hdc, input);
-		ReleaseDC(hwnd, hdc);
-		repaint = false;
-		}*/
+		//
 	}
 
 	return Msg.wParam;
-}
 }
