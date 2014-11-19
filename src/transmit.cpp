@@ -45,3 +45,16 @@ if !ackReceived
 Sleep(TO3 + a randomly generated number)
 
 */
+
+#include "transmit.h"
+
+DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
+{
+
+}
+
+void SendENQ()
+{
+
+}
+
