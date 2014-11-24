@@ -56,7 +56,11 @@ HANDLE hFile;
 
 DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 {
+<<<<<<< HEAD
 	
+=======
+	return NULL;
+>>>>>>> origin/master
 }
 
 void SendENQ()
