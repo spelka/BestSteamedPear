@@ -54,7 +54,8 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 
 	while (GetMessage(&Msg, NULL, 0, 0))
 	{
-		//
+		TranslateMessage(&Msg);
+		DispatchMessage(&Msg);
 	}
 
 	return Msg.wParam;
