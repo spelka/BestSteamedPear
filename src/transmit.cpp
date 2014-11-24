@@ -47,26 +47,59 @@ Sleep(TO3 + a randomly generated number)
 */
 
 #include "transmit.h"
+#include "protocol.h"
 
 bool stopWaiting = false;
 bool ackReceived = false;
 bool rviState = false;
 
-HANDLE hFile;
+HANDLE hCommPort;
 
 DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 {
-<<<<<<< HEAD
-	
-=======
 	return NULL;
->>>>>>> origin/master
 }
 
 void SendENQ()
 {
-	ReadFile(hFile, &d, 1, &x, NULL);
+	bool ackReceived;
+	bool timeOut;
+	char receivedChar;
 
+	/*
+	SetTimer(hwnd,                // handle to main window 
+		IDT_SENDENQTIMER,         // timer identifier 
+		5000,                     // 5-second interval 
+		(TIMERPROC)MyTimerProc);  // timer callback
+		*/
+
+	//While ack has not been received and timeout is not true
+	while (!ackReceived && !timeOut)
+	{
+		//set receivedChar empty
+		ReadFile(hCommPort, &receivedChar, 1, NULL, NULL);
+		if (receivedChar == ACK)
+		{
+			ackReceived = true;
+		}
+		else
+		{
+			//increment timeout
+			/*
+			if (timeoutCounter > TO2)
+			{
+				//timeoutCounter = true;
+			}*/
+		}
+	}
+	if (ackReceived)
+	{
+		WriteFile(hCommPort, &ENQ, 1, NULL, NULL);
+	}
+	else //Timed out
+	{
+		resetState();
+	}
 }
 
 char sendData()
