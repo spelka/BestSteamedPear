@@ -54,24 +54,25 @@ bool ackReceived = false;
 bool rviState = false;
 
 HANDLE hCommPort;
+UINT_PTR IDT_SENDENQTIMER;
+bool ackReceived;
+bool timeOut;
 
 DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 {
+	ackReceived = false;
 	return NULL;
 }
 
 void SendENQ()
 {
-	bool ackReceived;
-	bool timeOut;
 	char receivedChar;
 
-	/*
-	SetTimer(hwnd,                // handle to main window 
+
+	SetTimer(NULL,                // handle to main window 
 		IDT_SENDENQTIMER,         // timer identifier 
-		5000,                     // 5-second interval 
+		5000,                     //TODO-------------------------------------------change to proper TO2
 		(TIMERPROC)MyTimerProc);  // timer callback
-		*/
 
 	//While ack has not been received and timeout is not true
 	while (!ackReceived && !timeOut)
@@ -81,15 +82,6 @@ void SendENQ()
 		if (receivedChar == ACK)
 		{
 			ackReceived = true;
-		}
-		else
-		{
-			//increment timeout
-			/*
-			if (timeoutCounter > TO2)
-			{
-				//timeoutCounter = true;
-			}*/
 		}
 	}
 	if (ackReceived)
@@ -116,3 +108,14 @@ void resetState()
 	
 }
 
+VOID CALLBACK MyTimerProc(
+	HWND hwnd,        // handle to window for timer messages 
+	UINT message,     // WM_TIMER message 
+	UINT idTimer,     // timer identifier 
+	DWORD dwTime)     // current system time 
+	{
+		if (idTimer == IDT_SENDENQTIMER)
+		{
+			timeout = true;
+		}
+	}
