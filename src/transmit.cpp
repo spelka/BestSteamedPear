@@ -48,13 +48,34 @@ Sleep(TO3 + a randomly generated number)
 
 #include "transmit.h"
 
+bool stopWaiting = false;
+bool ackReceived = false;
+bool rviState = false;
+
+HANDLE hFile;
+
 DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 {
-
+	
 }
 
 void SendENQ()
 {
+	ReadFile(hFile, &d, 1, &x, NULL);
 
+}
+
+char sendData()
+{
+	char response;
+
+
+
+	return response;
+}
+
+void resetState()
+{
+	
 }
 
