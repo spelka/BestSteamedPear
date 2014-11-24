@@ -50,7 +50,7 @@ Sleep(TO3 + a randomly generated number)
 
 DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 {
-
+	return NULL;
 }
 
 void SendENQ()

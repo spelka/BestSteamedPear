@@ -8,7 +8,6 @@ LRESULT CALLBACK WndProc(HWND
 	, WPARAM
 	, LPARAM);
 
-
 int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	, HINSTANCE hprevInstance         //_In_  HINSTANCE hPrevInstance,
 	, LPSTR lspszCmdParam             //_In_  LPSTR lpCmdLine,
@@ -29,7 +28,7 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	windowClass.lpfnWndProc = WndProc;
 	windowClass.hInstance = hInst;
 	windowClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
-	windowClass.lpszClassName = Name;								//PLACEHOLDER
+	windowClass.lpszClassName = Name;
 
 	windowClass.lpszMenuName = TEXT("MYMENU");
 	windowClass.cbClsExtra = 0;
@@ -38,7 +37,7 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	if (!RegisterClassEx(&windowClass))
 		return 0;
 
-	hWnd = CreateWindow(Name                 //_In_opt_  LPCTSTR lpClassName,
+	hWnd = CreateWindow(Name   //_In_opt_  LPCTSTR lpClassName,
 		, Name                 //_In_opt_  LPCTSTR lpWindowName,
 		, WS_OVERLAPPEDWINDOW  //_In_      DWORD dwStyle,
 		, 10                   //_In_      int x,
@@ -59,4 +58,12 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	}
 
 	return Msg.wParam;
+}
+
+LRESULT CALLBACK WndProc(HWND hwnd
+	, UINT msg
+	, WPARAM wParam
+	, LPARAM lParam)
+{
+	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
