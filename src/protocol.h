@@ -1,6 +1,7 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
+#include <windows.h>
 #include <vector>
 
 const char ENQ = 0x05;
@@ -10,8 +11,12 @@ const char NAK = 0x21;
 
 struct WConn
 {
+	HANDLE hComm;
+
 	std::vector<char> buffer_receive;
 	std::vector<char> buffer_send;
 };
+
+WConn& GetWConn();
 
 #endif // PROTOCOL_H
