@@ -7,7 +7,7 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm);
 
 void Send();
 void Transmit();
-void SendData();
+char SendData();
 void ResetState();
 
 #endif // TRANSMIT_H
