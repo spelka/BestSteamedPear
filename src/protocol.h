@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <vector>
 
+const char NUL = 0x00;
 const char ENQ = 0x05;
 const char ACK = 0x06;
 const char RVI = 0x17;
