@@ -48,6 +48,7 @@ Sleep(TO3 + a randomly generated number)
 
 #include "transmit.h"
 #include "protocol.h"
+#include "receive.h"
 
 bool stopWaiting = false;
 bool rviState = false;
@@ -65,39 +66,32 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 
 void SendENQ()
 {
-	char receivedChar;
-
-
 	SetTimer(NULL,                // handle to main window 
 		IDT_SENDENQTIMER,         // timer identifier 
-		5000,                     //TODO-------------------------------------------change to proper TO2
+		GetWConn().TO2,           // timeout 2
 		(TIMERPROC)MyTimerProc);  // timer callback
 
 	//While ack has not been received and timeout is not true
 	while (!responseReceived && !timeOut)
 	{
 		//set receivedChar empty
-		//--------------------------REPLACE WITH SEBASTIANS CHAR RECEIVE LATER(?)
-		ReadFile(hCommPort, &receivedChar, 1, NULL, NULL);
-		if (receivedChar != NULL)
+		if (ReceiveChar(ACK))
 		{
 			responseReceived = true;
 		}
 	}
+
 	if (responseReceived)
 	{
-		if (receivedChar == ACK)
-		{
-			WriteFile(hCommPort, &ENQ, 1, NULL, NULL);
-		}
+		Transmit();
 	}
 	else //Timed out
 	{
-		resetState();
+		ResetState();
 	}
 }
 
-char sendData()
+char SendData()
 {
 	char response;
 
@@ -106,7 +100,7 @@ char sendData()
 	return response;
 }
 
-void resetState()
+void ResetState()
 {
 	
 }
@@ -116,9 +110,9 @@ VOID CALLBACK MyTimerProc(
 	UINT message,     // WM_TIMER message 
 	UINT idTimer,     // timer identifier 
 	DWORD dwTime)     // current system time 
+{
+	if (idTimer == IDT_SENDENQTIMER)
 	{
-		if (idTimer == IDT_SENDENQTIMER)
-		{
-			timeOut = true;
-		}
+		timeOut = true;
 	}
+}

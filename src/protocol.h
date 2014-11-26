@@ -14,6 +14,12 @@ struct WConn
 {
 	HANDLE hComm;
 
+	double		TO1,
+				TO2,
+				TO3,
+				TO4
+				;
+
 	std::vector<char> buffer_receive;
 	std::vector<char> buffer_send;
 };
