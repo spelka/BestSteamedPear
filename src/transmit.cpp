@@ -50,17 +50,16 @@ Sleep(TO3 + a randomly generated number)
 #include "protocol.h"
 
 bool stopWaiting = false;
-bool ackReceived = false;
 bool rviState = false;
 
 HANDLE hCommPort;
 UINT_PTR IDT_SENDENQTIMER;
-bool ackReceived;
+bool responseReceived;
 bool timeOut;
 
 DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 {
-	ackReceived = false;
+	responseReceived = false;
 	return NULL;
 }
 
@@ -75,19 +74,22 @@ void SendENQ()
 		(TIMERPROC)MyTimerProc);  // timer callback
 
 	//While ack has not been received and timeout is not true
-	while (!ackReceived && !timeOut)
+	while (!responseReceived && !timeOut)
 	{
 		//set receivedChar empty
 		//--------------------------REPLACE WITH SEBASTIANS CHAR RECEIVE LATER(?)
 		ReadFile(hCommPort, &receivedChar, 1, NULL, NULL);
-		if (receivedChar == ACK)
+		if (receivedChar != NULL)
 		{
-			ackReceived = true;
+			responseReceived = true;
 		}
 	}
-	if (ackReceived)
+	if (responseReceived)
 	{
-		WriteFile(hCommPort, &ENQ, 1, NULL, NULL);
+		if (receivedChar == ACK)
+		{
+			WriteFile(hCommPort, &ENQ, 1, NULL, NULL);
+		}
 	}
 	else //Timed out
 	{
