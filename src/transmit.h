@@ -1,7 +1,7 @@
 #ifndef TRANSMIT_H
 #define TRANSMIT_H
 
-#include <Windows.h>
+#include <windows.h>
 
 DWORD WINAPI TransmitThread(LPVOID lpvThreadParm);
 
