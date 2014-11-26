@@ -64,6 +64,18 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 	return NULL;
 }
 
+VOID CALLBACK MyTimerProc(
+	HWND hwnd,        // handle to window for timer messages 
+	UINT message,     // WM_TIMER message 
+	UINT idTimer,     // timer identifier 
+	DWORD dwTime)     // current system time 
+{
+	if (idTimer == IDT_SENDENQTIMER)
+	{
+		timeOut = true;
+	}
+}
+
 void SendENQ()
 {
 	SetTimer(NULL,                // handle to main window 
@@ -93,7 +105,7 @@ void SendENQ()
 
 char SendData()
 {
-	char response;
+	char response = NUL;
 
 
 
@@ -103,16 +115,4 @@ char SendData()
 void ResetState()
 {
 	
-}
-
-VOID CALLBACK MyTimerProc(
-	HWND hwnd,        // handle to window for timer messages 
-	UINT message,     // WM_TIMER message 
-	UINT idTimer,     // timer identifier 
-	DWORD dwTime)     // current system time 
-{
-	if (idTimer == IDT_SENDENQTIMER)
-	{
-		timeOut = true;
-	}
 }

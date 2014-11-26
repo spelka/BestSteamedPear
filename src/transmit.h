@@ -3,7 +3,8 @@
 
 #include <windows.h>
 
-DWORD WINAPI TransmitThread(LPVOID lpvThreadParm);
+DWORD WINAPI TransmitThread(LPVOID);
+VOID CALLBACK MyTimerProc(HWND, UINT, UINT, DWORD);
 
 void Send();
 void Transmit();
