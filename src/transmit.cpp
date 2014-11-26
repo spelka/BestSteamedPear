@@ -78,6 +78,7 @@ void SendENQ()
 	while (!ackReceived && !timeOut)
 	{
 		//set receivedChar empty
+		//--------------------------REPLACE WITH SEBASTIANS CHAR RECEIVE LATER(?)
 		ReadFile(hCommPort, &receivedChar, 1, NULL, NULL);
 		if (receivedChar == ACK)
 		{
@@ -116,6 +117,6 @@ VOID CALLBACK MyTimerProc(
 	{
 		if (idTimer == IDT_SENDENQTIMER)
 		{
-			timeout = true;
+			timeOut = true;
 		}
 	}
