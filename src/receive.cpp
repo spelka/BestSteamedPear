@@ -121,30 +121,4 @@ char ReceiveChar()
 void receivePacket(WConn* w)
 {
 	//read in data from port to the WConn->buffer_receive
-	//if (ReadFile(GetWConn().hComm, w->buffer_receive, ))
-}
-
-void invalidData()
-{
-
-}
-
-void packetValidator()
-{
-
-}
-
-void timeOut1()
-{
-
-}
-
-void validDataEOT()
-{
-
-}
-
-void validDataETB()
-{
-
 }
