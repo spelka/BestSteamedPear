@@ -10,6 +10,8 @@ const char ACK = 0x06;
 const char RVI = 0x17;
 const char NAK = 0x21;
 
+const int PACKET_SIZE = 1024; //packet size in bytes
+
 struct WConn
 {
 	HANDLE hComm;
