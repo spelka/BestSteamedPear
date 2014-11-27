@@ -1,3 +1,6 @@
+#include "receive.h"
+#include "protocol.h"
+
 /*
 GLOBAL VARIABLES TO2, TO3
 
@@ -45,10 +48,6 @@ if !ackReceived
 Sleep(TO3 + a randomly generated number)
 */
 
-
-#include "receive.h"
-#include "protocol.h"
-
 //receieve.cpp
 bool receivingMode = false;
 
@@ -56,7 +55,7 @@ bool receivingMode = false;
 //send ACK
 //go into a receiving loop
 //if you timeout
-timeout += TO1
+//timeout += TO1
 //if timeout == TO3 * MAX_MISS
 //return to idle protocol
 //if you receive a packet
@@ -76,7 +75,7 @@ timeout += TO1
 void SendACK(HANDLE hComm)
 {
 	//Send an ACK
-	if (!WriteFile(hComm, ACK, 1, &bytesWritten, NULL))
+	if (!WriteFile(hComm, &ACK, 1, NULL, NULL))
 	{
 		MessageBox(NULL, TEXT("Error: Failed to send ACK"), TEXT("Error"), MB_OK | MB_ICONERROR);
 	}
@@ -112,14 +111,14 @@ char ReceiveChar()
 	//if you fail to read in a file, return false
 	if (!ReadFile(GetWConn().hComm, &received, 1, NULL, NULL))
 	{
-		return 0x0;
+		return NUL;
 	}
 	//if read was successful, return the read-in character
 	return received;
 }
 
 
-void receivePacket()
+void receivePacket(WConn* w)
 {
-
+	
 }
