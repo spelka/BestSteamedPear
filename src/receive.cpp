@@ -120,5 +120,5 @@ char ReceiveChar()
 
 void receivePacket(WConn* w)
 {
-	
+	//read in data from port to the WConn->buffer_receive
 }
