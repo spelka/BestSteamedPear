@@ -99,7 +99,7 @@ void SendENQ()
 
 char sendData()
 {
-	char response;
+	char response = 'a';
 
 
 
