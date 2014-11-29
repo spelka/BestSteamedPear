@@ -15,6 +15,8 @@ const char PAD = 0x54;
 const unsigned PACKET_SIZE = 1024; //packet size in bytes
 const unsigned PACKET_DATA_SIZE = 1018; //packet size in bytes
 
+const unsigned MAX_SEND = 10;
+
 struct WConn
 {
 	HANDLE hComm;
@@ -31,5 +33,22 @@ struct WConn
 };
 
 WConn& GetWConn();
+
+class Timer
+{
+public:
+	Timer();
+	~Timer();
+
+	char WaitForResponse();
+
+private:
+	VOID CALLBACK TimerCallBack(HWND, UINT, UINT, DWORD);
+
+	bool timerCalledBack;
+	char response;
+};
+
+DWORD WINAPI TransmitThread(LPVOID);
 
 #endif // PROTOCOL_H

@@ -49,8 +49,6 @@ bool rviState = false;
 
 HANDLE hCommPort;
 UINT_PTR IDT_SENDENQTIMER;
-bool responseReceived;
-bool timeOut;
 
 DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 {
@@ -68,22 +66,25 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 	return NULL;
 }
 
-VOID CALLBACK MyTimerProc(
-	HWND hwnd,        // handle to window for timer messages 
-	UINT message,     // WM_TIMER message 
-	UINT idTimer,     // timer identifier 
-	DWORD dwTime)     // current system time 
+char WaitForResponse()
 {
-	if (idTimer == IDT_SENDENQTIMER)
+	char response = NUL;
+	bool timeOut;
+
+	//While a response has not been received and timeout is not true
+	while (!timeOut)
 	{
-		timeOut = true;
+		response = ReceiveChar();
+
+		// response received
+		if (response != NUL) break;
 	}
+
+	return response;
 }
 
 char SendChar(char charToSend, unsigned toDuration)
 {
-	char response = NUL;
-
 	SetTimer(NULL,                // handle to main window 
 		IDT_SENDENQTIMER,         // timer identifier 
 		toDuration,			      // timeout
@@ -94,16 +95,7 @@ char SendChar(char charToSend, unsigned toDuration)
 		return NUL;
 	}
 
-	//While ack has not been received and timeout is not true
-	while (!timeOut)
-	{
-		response = ReceiveChar();
-
-		// response received
-		if (response != NUL) break;
-	}
-
-	return response;
+	return WaitForResponse();
 }
 
 char SendPacket()
@@ -135,12 +127,30 @@ char SendPacket()
 		return NUL;
 	}
 
-	return ReceiveChar();
+	return WaitForResponse();
 }
 
 void Transmit()
 {
+	/*
+	while there is more data AND send_count is less than max_send
+	In the case that Send Data returns an ACK:
+	more data to send, increment send_count
+	In the case that Send Data returns an NACK:
+	resend data
+	timeoutCount++
+	In the case that Send Data returns an RVI:
+	rviState = true
+	*/
 
+	for (unsigned tries = 0; tries < MAX_SEND; ++tries)
+	{
+		if (GetWConn().buffer_send.size() <= 0) return;
+
+		char response = SendPacket();
+		if (response == ACK) continue;
+		else 
+	}
 }
 
 void ResetState()
