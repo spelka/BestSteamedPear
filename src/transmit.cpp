@@ -39,6 +39,11 @@ Sleep(TO3 + a randomly generated number)
 #include "protocol.h"
 #include "receive.h"
 
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
 bool stopWaiting = false;
 bool rviState = false;
 
@@ -101,9 +106,31 @@ char SendChar(char charToSend, unsigned toDuration)
 	return response;
 }
 
-void SendPacket()
+char SendPacket()
 {
+	vector<char> packet;
 
+	copy(
+		GetWConn().buffer_send.begin(),
+
+		GetWConn().buffer_send.size() >= PACKET_DATA_SIZE
+		? GetWConn().buffer_send.begin() + PACKET_DATA_SIZE - 1
+		: GetWConn().buffer_send.begin() + GetWConn().buffer_send.size() - 1,
+
+		packet.begin()
+		);
+
+	packet.push_back(ETX);
+
+	for (int p = 0; p < PACKET_DATA_SIZE - packet.size(); ++p)
+	{
+		packet.push_back(PAD);
+	}
+
+	if (!WriteFile(GetWConn().hComm, &packet, PACKET_DATA_SIZE, NULL, NULL))
+	{
+		return NUL;
+	}
 }
 
 void Transmit()
