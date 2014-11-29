@@ -49,7 +49,17 @@ bool timeOut;
 
 DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 {
-	responseReceived = false;
+	char response = SendChar(ENQ, GetWConn().TO2);
+
+	if (response != NUL)
+	{
+		Transmit();
+	}
+	else //Timed out
+	{
+		ResetState();
+	}
+
 	return NULL;
 }
 
@@ -65,40 +75,37 @@ VOID CALLBACK MyTimerProc(
 	}
 }
 
-void SendENQ()
+char SendChar(char sendChar, unsigned toDuration)
 {
+	char received;
+
 	SetTimer(NULL,                // handle to main window 
 		IDT_SENDENQTIMER,         // timer identifier 
-		GetWConn().TO2,           // timeout 2
+		toDuration,			      // timeout
 		(TIMERPROC)MyTimerProc);  // timer callback
 
+	hwrite(...);
+
 	//While ack has not been received and timeout is not true
-	while (!responseReceived && !timeOut)
+	while (!timeOut)
 	{
+		received = ReceiveChar();
+
 		//set receivedChar empty
-		if (ReceiveChar(ACK))
-		{
-			responseReceived = true;
-		}
+		if (received != NUL) break;
 	}
 
-	if (responseReceived)
-	{
-		Transmit();
-	}
-	else //Timed out
-	{
-		ResetState();
-	}
+	return received;
 }
 
-char SendData()
+void SendPacket()
 {
-	char response = NUL;
 
+}
 
+void Transmit()
+{
 
-	return response;
 }
 
 void ResetState()
