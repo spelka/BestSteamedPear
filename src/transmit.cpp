@@ -120,9 +120,12 @@ char SendPacket()
 		packet.begin()
 		);
 
+	GetWConn().buffer_send.erase(GetWConn().buffer_send.begin(),
+		GetWConn().buffer_send.begin() + PACKET_DATA_SIZE - 1);
+
 	packet.push_back(ETX);
 
-	for (int p = 0; p < PACKET_DATA_SIZE - packet.size(); ++p)
+	for (unsigned p = 0; p < PACKET_DATA_SIZE - packet.size(); ++p)
 	{
 		packet.push_back(PAD);
 	}
@@ -131,6 +134,8 @@ char SendPacket()
 	{
 		return NUL;
 	}
+
+	return ReceiveChar();
 }
 
 void Transmit()
