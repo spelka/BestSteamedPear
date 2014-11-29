@@ -76,6 +76,7 @@ void SendACK(HANDLE hComm)
 //receives a character from the comm port and checks if the received char is what was expected
 bool ReceiveChar(char expectedChar)
 {
+
 	char received;
 
 	//read in character from comm port
@@ -107,13 +108,49 @@ char ReceiveChar()
 	return received;
 }
 
-
-void receivePacket(WConn& w)
+//---------------------------------------------------------------------------
+// This function is designed to receive packets coming in on the serial port. 
+// It is event-driven, and operates when a recieve char event occurs on the 
+// port. As a result, this is a blocking funciton and should therefore be run 
+// in its own thread.
+//
+// Source: http://msdn.microsoft.com/en-us/library/ff802693.aspx
+//
+//------------------------------------------------------------------------------
+bool ReceivePacket(WConn& w)
 {
-	//read in data from port to the WConn->buffer_receive char vector
-	if (!ReadFile(w.hComm, &w.buffer_receive, sizeof(PACKET_SIZE), NULL, NULL))
-	{
+	char controlChar;
+	DWORD dwCommEvent;
+	DWORD dwRead;
 
+	//if the comm mask is successfully set to watch for receiving character events
+	if (!SetCommMask(w.hComm, EV_RXCHAR))
+	{
+		return false;
+	}
+
+	for (;;)
+	{
+		if (WaitCommEvent(w.hComm, &dwCommEvent, NULL))
+		{
+			do
+			{
+				if (ReadFile(w.hComm, &w.buffer_receive, sizeof(PACKET_SIZE)-1, NULL, NULL))
+				{
+					//read in packet
+				}
+				else
+				{
+					//an error occured while reading in the file
+					break;
+				}
+			} while (dwRead);
+		}
+		else
+		{
+			//error in WaitCommEvent
+			break;
+		}
 	}
 }
 
