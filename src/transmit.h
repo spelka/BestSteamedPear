@@ -6,7 +6,7 @@
 DWORD WINAPI TransmitThread(LPVOID);
 VOID CALLBACK MyTimerProc(HWND, UINT, UINT, DWORD);
 
-char SendChar(char sendChar, unsigned toDuration);
+char SendChar(char charToSend, unsigned toDuration);
 void SendPacket();
 
 void Transmit();

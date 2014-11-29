@@ -75,27 +75,30 @@ VOID CALLBACK MyTimerProc(
 	}
 }
 
-char SendChar(char sendChar, unsigned toDuration)
+char SendChar(char charToSend, unsigned toDuration)
 {
-	char received;
+	char response = NUL;
 
 	SetTimer(NULL,                // handle to main window 
 		IDT_SENDENQTIMER,         // timer identifier 
 		toDuration,			      // timeout
 		(TIMERPROC)MyTimerProc);  // timer callback
 
-	hwrite(...);
+	if (!WriteFile(GetWConn().hComm, &charToSend, 1, NULL, NULL))
+	{
+		return NUL;
+	}
 
 	//While ack has not been received and timeout is not true
 	while (!timeOut)
 	{
-		received = ReceiveChar();
+		response = ReceiveChar();
 
-		//set receivedChar empty
-		if (received != NUL) break;
+		// response received
+		if (response != NUL) break;
 	}
 
-	return received;
+	return response;
 }
 
 void SendPacket()
