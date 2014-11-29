@@ -1,6 +1,11 @@
 #include <windows.h>
 #include <commctrl.h>
 
+#include "crc.h"
+#include <stdio.h>
+#include <string>
+#include <sstream>
+
 char Name[] = "Best Steamed Pear";
 
 LRESULT CALLBACK WndProc(HWND
@@ -13,6 +18,35 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	, LPSTR lspszCmdParam             //_In_  LPSTR lpCmdLine,
 	, int nCmdShow)                   //_In_  int nCmdShow
 {
+    //* crc test
+    unsigned char  test[] = "123456789";
+    std::stringstream ss;
+
+    ss << "The check value for the " << CRC_NAME << " standard is 0x" << CHECK_VALUE << std::endl;
+
+	/*
+	 * Print the check value for the selected CRC algorithm.
+	 */
+    OutputDebugString( ss.str().c_str() );
+
+    ss.clear();
+
+    ss << "The crcSlow() of \"123456789\" is 0x" << crcSlow(test, strlen(reinterpret_cast<char*>(test))) << std::endl;
+	
+	/*
+	 * Compute the CRC of the test message, slowly.
+	 */
+    OutputDebugString( ss.str().c_str() );
+	
+	/*
+	 * Compute the CRC of the test message, more efficiently.
+	 */
+	crcInit();
+    ss.clear();
+	ss << "The crcFast() of \"123456789\" is 0x" << crcFast(test, strlen(reinterpret_cast<char*>(test))) << std::endl;
+    OutputDebugString( ss.str().c_str() );
+	
+    //*/
 	HWND hWnd;
 	HWND hStatus;
 	MSG Msg;
