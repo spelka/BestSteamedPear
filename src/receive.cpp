@@ -152,6 +152,7 @@ bool ReceivePacket(WConn& w)
 			break;
 		}
 	}
+	return true;
 }
 
 void invalidData()
