@@ -118,9 +118,13 @@ char ReceiveChar()
 }
 
 
-void receivePacket(WConn* w)
+void receivePacket(WConn& w)
 {
-	//read in data from port to the WConn->buffer_receive
+	//read in data from port to the WConn->buffer_receive char vector
+	if (!ReadFile(w.hComm, &w.buffer_receive, sizeof(PACKET_SIZE), NULL, NULL))
+	{
+		
+	}
 }
 
 void invalidData()

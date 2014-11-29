@@ -2,6 +2,7 @@
 #define LISTEN_H
 
 #include <windows.h>
+#include "protocol.h"
 
 void SendACK(HANDLE hComm);
 bool ReceiveChar(char expectedChar);
