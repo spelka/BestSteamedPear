@@ -1,21 +1,21 @@
 #include "protocol.h"
 #include "receive.h"
 
+using namespace std;
+
 WConn& GetWConn()
 {
 	static WConn wConn;
 	return wConn;
 }
 
-Timer::Timer()
-	:timerCalledBack(false)
-	,response(NUL)
-{}
-Timer::~Timer()
-{}
-
-char Timer::WaitForResponse()
+char Timer::WaitForResponse(unsigned timeout)
 {
+	SetTimer(NULL,					// handle to main window 
+		42,							// timer identifier 
+		timeout,					// timeout
+		(TIMERPROC)TimerCallBack);	// timer callback
+
 	while (!timerCalledBack)
 	{
 		response = ReceiveChar();

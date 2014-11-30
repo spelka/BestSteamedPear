@@ -3,7 +3,7 @@
 
 #include <windows.h>
 
-char WaitForResponse();
+DWORD WINAPI TransmitThread(LPVOID);
 
 char SendChar(char charToSend, unsigned toDuration);
 char SendPacket();
