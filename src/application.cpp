@@ -86,6 +86,8 @@ vector<TextHolder> TextHolder::txtHolders; // the container for all of the text 
 
 //--->
 
+const char Name[] = "Best Steamed Pear";
+
 int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	, HINSTANCE hprevInstance         //_In_  HINSTANCE hPrevInstance,
 	, LPSTR lspszCmdParam             //_In_  LPSTR lpCmdLine,
@@ -105,7 +107,6 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	MSG msg;
 	WNDCLASSEX Wcl;
 	LOGFONT logFont;
-	const char Name[] = "Best Steamed Pear";
 
 	// set colors
 	GResources::color_bk = RGB(83, 83, 83);
@@ -146,7 +147,7 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	TextHolder::txtHolders.push_back(TextHolder()); // CURRENT_MSG
 
 	TextHolder::txtHolders[CHAT_LOG].color_txt = RGB(225, 225, 225);
-	TextHolder::txtHolders[CURRENT_MSG].color_txt = RGB(0, 200, 0);
+	TextHolder::txtHolders[CURRENT_MSG].color_txt = RGB(200, 200, 255);
 
 	// initialize the text buffer
 	ClearScreen(ALL);
@@ -163,12 +164,145 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	return (int)msg.wParam;
 }
 
-LRESULT CALLBACK WndProc(HWND hwnd
-	, UINT msg
-	, WPARAM wParam
-	, LPARAM lParam)
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: 	WndProc
+--
+-- DATE: 		October 11, 2014
+--
+-- REVISIONS: 	NONE
+--
+-- DESIGNER: 	Aman Abdulla, Melvin Loho
+--
+-- PROGRAMMER: 	Melvin Loho
+--
+-- INTERFACE: 	LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM)
+--					HWND	: A handle to the window.
+--					UINT	: The message.
+--					WPARAM	: Additional message information.
+--					LPARAM	: Additional message information.
+--
+-- RETURNS: 	The return value is the result of the message processing and depends on the message sent.
+--
+-- NOTES:
+-- Originally from Aman's winmenu4 program.
+-- Handles all of the events (messages) sent to the window.
+----------------------------------------------------------------------------------------------------------------------*/
+LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
+	WPARAM wParam, LPARAM lParam)
 {
-	return DefWindowProc(hwnd, msg, wParam, lParam);
+	static PAINTSTRUCT paintstruct;
+
+	static HMENU mymenu = GetMenu(hwnd);
+	static MENUITEMINFO mii_connect = { sizeof(MENUITEMINFO), MIIM_STRING, MFT_STRING };
+
+	static MINMAXINFO* minmaxInfo;
+
+	static std::string helpMsg =
+		std::string()
+		.append("[- ").append(Name).append(" -]")
+		.append("\n")
+		.append("\nby:")
+		.append("\n+ Melvin Loho | A00885598")
+		.append("\n+ Alex Lam | A00880208")
+		.append("\n")
+		.append("\n[Menu Items]")
+		.append("\n> Connect/Disconnect - Connect to / disconnects from a SkyeTek reader.")
+		.append("\n> Clear Screen - Clears the contents of the screen.")
+		.append("\n> Help - Brings up this menu!")
+		.append("\n> Exit to CMD - Closes the connection and the window, while opening a command window.")
+		;
+
+	switch (Message)
+	{
+	case WM_COMMAND:			// menu items
+
+		/*
+		switch (LOWORD(wParam))
+		{
+		case ID_CONNECT:
+			if (!GetSTConn().isConnected)
+			{
+				if (Connect(3))
+				{
+					ClearScreen(ALL);
+					PrintToScreen(LOG, "> Connected to " + std::string("a SkyeTek reader") + "");
+				}
+				else
+				{
+					Disconnect();
+					PrintToScreen(LOG, "> Failed to connect to " + std::string("a SkyeTek reader") + "");
+				}
+			}
+			else
+			{
+				Disconnect();
+			}
+			// refresh the menu with the new information
+			if (GetSTConn().isConnected)	mii_connect.dwTypeData = "Disconnect";
+			else							mii_connect.dwTypeData = "Connect";
+			SetMenuItemInfo(mymenu, ID_CONNECT, FALSE, &mii_connect);
+			DrawMenuBar(hwnd);
+			break;
+
+		case ID_CLS:
+			ClearScreen(TAG_HISTORY);
+			break;
+
+		case ID_HELP:
+			MessageBox(hwnd, helpMsg.c_str(), "Help", MB_OK); // display help
+			break;
+
+		case ID_EXIT:
+			if (GetSTConn().isConnected) Disconnect();
+			PostQuitMessage(0);
+			system("cmd"); // open a command prompt
+			break;
+		}
+		break;
+		*/
+
+	case WM_CHAR:				// Process keystroke
+		/*
+		if (GetSTConn().isConnected)
+		{
+			if (wParam == VK_ESCAPE)
+			{
+				Disconnect();
+				// refresh the menu with the new information
+				mii_connect.dwTypeData = "Connect";
+				SetMenuItemInfo(mymenu, ID_CONNECT, FALSE, &mii_connect);
+				DrawMenuBar(hwnd);
+			}
+		}
+		*/
+
+		PrintToScreen(CURRENT_MSG, (char)wParam);
+		break;
+
+	case WM_PAINT:				// Process a repaint message
+		BeginPaint(hwnd, &paintstruct);
+		PaintComponents();
+		RedrawText();
+		EndPaint(hwnd, &paintstruct);
+		break;
+
+	case WM_GETMINMAXINFO:		// Give app the min/max window sizes
+		minmaxInfo = (MINMAXINFO*)lParam;
+		minmaxInfo->ptMinTrackSize.x = 800;
+		minmaxInfo->ptMinTrackSize.y = 600;
+		break;
+
+	case WM_DESTROY:			// Terminate program
+		/*
+		if (GetSTConn().isConnected) Disconnect();
+		*/
+
+		PostQuitMessage(0);
+		break;
+
+	default:
+		return DefWindowProc(hwnd, Message, wParam, lParam);
+	}
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -210,7 +344,6 @@ void PaintComponents()
 
 	rc_chatlog = rc_currmsg = rcWindow;
 
-	rc_chatlog.right *= (1.0 / 3.5);
 	rc_chatlog.bottom *= (0.8);
 
 	rc_currmsg.top = rc_chatlog.bottom;
@@ -296,6 +429,17 @@ void PrintToScreen(txtholder_idx whichHolder, std::string s, bool newlinebefore,
 	{
 		TextHolder::txtHolders[whichHolder].txtBuffer.push_back("\n");
 	}
+
+	ReleaseDC(hwnd, hdc); // Release device context
+
+	RedrawText(whichHolder);
+}
+
+void PrintToScreen(txtholder_idx whichHolder, char c)
+{
+	HDC hdc = GResources::GetDC();
+
+	TextHolder::txtHolders[whichHolder].txtBuffer.back().push_back(c);
 
 	ReleaseDC(hwnd, hdc); // Release device context
 
