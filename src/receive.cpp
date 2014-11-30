@@ -1,6 +1,7 @@
 #include <deque>
 #include "receive.h"
 #include "protocol.h"
+#include "crc.h"
 
 using namespace std;
 
@@ -150,7 +151,7 @@ void invalidData()
 
 }
 
-void validData()
+void validateData()
 {
 
 }
