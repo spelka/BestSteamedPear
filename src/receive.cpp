@@ -4,80 +4,28 @@
 #include "crc.h"
 
 using namespace std;
-
-/*
-GLOBAL VARIABLES TO2, TO3
-Booleans : stopWaiting, ackReceived, rviState
-//Transmit Thread
-stopWaiting = ackReceived = rviState = false
-Send ENQ
-//Send ENQ
-Set a timer that has the length of TO2 which calls the Reset State function when it ends
-while ACK has not been received and stopWaiting is false
-if the software receives an ACK
-ackReceived = true
-Transmit Mode
-if rviState
-return
-else
-Reset State
-//Transmit Mode
-while there is more data AND send_count is less than max_send
-In the case that Send Data returns an ACK :
-more data to send, increment send_count
-In the case that Send Data returns an NACK :
-resend data
-timeoutCount++
-In the case that Send Data returns an RVI :
-rviState = true
-//Send Data
-Take data out of buffer
-add crc to data
-send
-Wait for response
-Return response
-//Reset State
-stopWaiting = true
-if !ackReceived
-Sleep(TO3 + a randomly generated number)
-*/
-
-//receieve.cpp
 bool receivingMode = false;
-
-//receive an ENQ or RVI
-//send ACK
-//go into a receiving loop
-//if you timeout
-//timeout += TO1
-//if timeout == TO3 * MAX_MISS
-//return to idle protocol
-//if you receive a packet
-//CRC validate the packet
-//if the packet is valid and ETB
-//return to receiving loop
-//else if the packet is invalid and miss < MAX_MISS
-//return to receiving loop
-//else if the packet is valid and EOT
-//print message to screen
-//return to idle protocol
-//else if you need to send
-//send RVI
-//on ACK of RVI, go to transmission thread
-
 COMMTIMEOUTS timeouts = { 0, 0, 0, 0, 0 };
 
-//---------------------------------------------------------------------------------------------
-//receives a character from the comm port and checks if the received char is what was expected
-//
-//Created On: Wednesday, November 19
-//
-//Designed By: Sebastian Pelka
-//
-//Modified By:	Georgi Hristov, November 29, 2014
-//				Sebastian Pelka, November 29, 2014
-//
-//---------------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: 	ReadChar
+--
+-- DATE: 		November 19, 2014
+--
+-- REVISIONS: 	NONE
+--
+-- DESIGNER: 	Sebastian Pelka
+--
+-- PROGRAMMER: 	Sebastian Pelka
+--
+-- INTERFACE: 	char ReadChar(DWORD timeout)
+--					DWORD timeout	: the timeout to be applied to the ReadFile method within this function
+--
+-- RETURNS: 	the char read in from the input buffer.
+--
+-- NOTES:
+-- Reads one character from the input buffer and returns it.
+----------------------------------------------------------------------------------------------------------------------*/
 char ReadChar(DWORD timeout)
 {
 	timeouts.ReadIntervalTimeout = timeout;
@@ -95,23 +43,28 @@ char ReadChar(DWORD timeout)
 	return received;
 }
 
-//---------------------------------------------------------------------------
-// This function is designed to receive packets coming in on the serial port. 
-// It is event-driven, and operates when a recieve char event occurs on the 
-// port. As a result, this is a blocking funciton and should therefore be run 
-// in its own thread.
-//
-// Source: http://msdn.microsoft.com/en-us/library/ff802693.aspx
-//
-//Created On: Wednesday, November 19
-//
-//Designed By: Sebastian Pelka
-//
-//Modified By:	Georgi Hristov, November 29, 2014
-//				Sebastian Pelka, November 29, 2014
-//
-//---------------------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: 	FillRXBuffer
+--
+-- DATE: 		November 19, 2014
+--
+-- REVISIONS: 	NONE
+--
+-- DESIGNER: 	Sebastian Pelka
+--
+-- PROGRAMMER: 	Sebastian Pelka
+--				Georgi Hristov
+--
+-- INTERFACE: 	bool FillRxBuffer()
+--
+-- RETURNS: 	true if the function succeeds in reading all data from the port
+--
+-- NOTES:
+-- When a character is received on the input buffer, an event is generated, and the contents of the input buffer are
+-- read in and copied to the GetWConn recieve buffer.
+--
+-- SOURCE: http://msdn.microsoft.com/en-us/library/ff802693.aspx
+----------------------------------------------------------------------------------------------------------------------*/
 bool FillRxBuffer()
 {
 	char controlChar;
@@ -164,26 +117,26 @@ bool FillRxBuffer()
 	return true;
 }
 
-void invalidData()
-{
-
-}
-
-void validateData()
-{
-
-}
-
-//-------------------------------------------------------------------------------------------------
-// Iterates over the WConn reveived buffer if the CRC validator confirmed the received data is good.
-// This function pulls the data out of the packet structure and adds it to the print buffer, which
-// contains all validated message data so far.
-//
-// Returns true if the ETX character is found.
-//
-// Created On: November 29, 2014 by Sebastian Pelka
-//
-//--------------------------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: 	CheckForETX
+--
+-- DATE: 		November 29, 2014
+--
+-- REVISIONS: 	NONE
+--
+-- DESIGNER: 	Sebastian Pelka
+--
+-- PROGRAMMER: 	Sebastian Pelka
+--
+-- INTERFACE: 	bool CheckForETX()
+--
+-- RETURNS: 	true if the ETX character is found
+--
+-- NOTES:
+-- Iterates over the WConn received buffer, if the CRC validator function confirmed the received data is good. This
+-- function pulls the data out of the packet structure and adds it to the print buffer, which containes all the
+-- validated data to be printed to the screen so far.
+----------------------------------------------------------------------------------------------------------------------*/
 bool CheckForETX()
 {
 	bool ETXfound = false;
@@ -208,13 +161,23 @@ bool CheckForETX()
 
 }
 
-/*---------------------------------------------------------------------------------------------------
--- Checks to see if the reciveded PrintBuffer is empty. If it is not, it clears the print buffer
--- and leaves it with a size of zero.
+/*------------------------------------------------------------------------------------------------------------------
+-- FUNCTION: 	ClearPrintBuffer()
 --
+-- DATE: 		November 29, 2014
 --
+-- REVISIONS: 	NONE
 --
-----------------------------------------------------------------------------------------------------*/
+-- DESIGNER: 	Sebastian Pelka
+--
+-- PROGRAMMER: 	Sebastian Pelka
+--
+-- INTERFACE: 	void ClearPrintBuffer()
+--
+-- NOTES:
+-- Clears the received print buffer. This function is intended to be called after the contents of the print buffer
+-- are painted to the screen.
+----------------------------------------------------------------------------------------------------------------------*/
 void ClearPrintBuffer()
 {
 	if (!GetPrintBuffer().received.empty())
