@@ -78,12 +78,12 @@ COMMTIMEOUTS timeouts = { 0, 0, 0, 0, 0 };
 //				Sebastian Pelka, November 29, 2014
 //
 //---------------------------------------------------------------------------------------------
-char ReadChar(WConn& w, DWORD timeout)
+char ReadChar(DWORD timeout)
 {
 	timeouts.ReadIntervalTimeout = timeout;
 	char received = NUL;
 	// set timeouts
-	if (!SetCommTimeouts(w.hComm, &timeouts))
+	if (!SetCommTimeouts(GetWConn().hComm, &timeouts))
 	{
 		// Error setting time-outs.
 	}
@@ -112,7 +112,7 @@ char ReadChar(WConn& w, DWORD timeout)
 //
 //---------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
-bool FillRxBuffer(WConn& w)
+bool FillRxBuffer()
 {
 	char controlChar;
 	char buffer[PACKET_SIZE];
@@ -120,29 +120,29 @@ bool FillRxBuffer(WConn& w)
 	DWORD dwRead = 0;
 
 	//if the comm mask is successfully set to watch for receiving character events
-	if (!SetCommMask(w.hComm, EV_RXCHAR))
+	if (!SetCommMask(GetWConn().hComm, EV_RXCHAR))
 	{
 		return false;
 	}
 
 	for (;;)
 	{
-		if (WaitCommEvent(w.hComm, &dwCommEvent, NULL))
+		if (WaitCommEvent(GetWConn().hComm, &dwCommEvent, NULL))
 		{
 			do
 			{
-				if (ReadFile(w.hComm, &controlChar, 1, NULL, NULL))
+				if (ReadFile(GetWConn().hComm, &controlChar, 1, NULL, NULL))
 				{
 					//if the data in the buffer is a packet
 					if (controlChar == EOT || controlChar == ETB)
 					{
 						//if you successfully read the packet in
-						if (ReadFile(w.hComm, &dwRead, PACKET_SIZE - 1, NULL, NULL))
+						if (ReadFile(GetWConn().hComm, &dwRead, PACKET_SIZE - 1, NULL, NULL))
 						{
 							//push the characters into the receive buffer
 							for (unsigned int i = 1; i < PACKET_SIZE; i++)
 							{
-								(w.buffer_receive).push_back(buffer[i]);
+								(GetWConn().buffer_receive).push_back(buffer[i]);
 							}
 						}
 					}
