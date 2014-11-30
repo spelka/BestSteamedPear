@@ -17,11 +17,13 @@
  
 #include "crc.h"
 
+using std::deque;
+using std::vector;
 
 /*
  * Derive parameters from the standard-specific parameters in crc.h.
  */
-#define WIDTH    (8 * sizeof(crc))
+#define WIDTH    (8 * sizeof(unsigned long))
 #define TOPBIT   (1 << (WIDTH - 1))
 
 #if (REFLECT_DATA == TRUE)
@@ -34,7 +36,7 @@
 
 #if (REFLECT_REMAINDER == TRUE)
 #undef  REFLECT_REMAINDER
-#define REFLECT_REMAINDER(X)	((crc) reflect((X), WIDTH))
+#define REFLECT_REMAINDER(X)	((unsigned long) reflect((X), WIDTH))
 #else
 #undef  REFLECT_REMAINDER
 #define REFLECT_REMAINDER(X)	(X)
@@ -79,64 +81,7 @@ reflect(unsigned long data, unsigned char nBits)
 
 }	/* reflect() */
 
-
-/*********************************************************************
- *
- * Function:    crcSlow()
- * 
- * Description: Compute the CRC of a given message.
- *
- * Notes:		
- *
- * Returns:		The CRC of the message.
- *
- *********************************************************************/
-crc
-crcSlow(unsigned char const message[], int nBytes)
-{
-    crc            remainder = INITIAL_REMAINDER;
-	int            byte;
-	unsigned char  bit;
-
-
-    /*
-     * Perform modulo-2 division, a byte at a time.
-     */
-    for (byte = 0; byte < nBytes; ++byte)
-    {
-        /*
-         * Bring the next byte into the remainder.
-         */
-        remainder ^= (REFLECT_DATA(message[byte]) << (WIDTH - 8));
-
-        /*
-         * Perform modulo-2 division, a bit at a time.
-         */
-        for (bit = 8; bit > 0; --bit)
-        {
-            /*
-             * Try to divide the current data bit.
-             */
-            if (remainder & TOPBIT)
-            {
-                remainder = (remainder << 1) ^ POLYNOMIAL;
-            }
-            else
-            {
-                remainder = (remainder << 1);
-            }
-        }
-    }
-
-    /*
-     * The final remainder is the CRC result.
-     */
-    return (REFLECT_REMAINDER(remainder) ^ FINAL_XOR_VALUE);
-
-}   /* crcSlow() */
-
-
-crc  crcTable[256];
+unsigned long  crcTable[256];
 
 
 /*********************************************************************
@@ -155,7 +100,7 @@ crc  crcTable[256];
 void
 crcInit(void)
 {
-    crc			   remainder;
+    unsigned long  remainder;
 	int			   dividend;
 	unsigned char  bit;
 
@@ -208,10 +153,10 @@ crcInit(void)
  * Returns:		The CRC of the message.
  *
  *********************************************************************/
-crc
-crcFast(unsigned char const message[], int nBytes)
+unsigned long
+crc(unsigned char const message[], int nBytes)
 {
-    crc	           remainder = INITIAL_REMAINDER;
+    unsigned long  remainder = INITIAL_REMAINDER;
     unsigned char  data;
 	int            byte;
 
@@ -222,6 +167,54 @@ crcFast(unsigned char const message[], int nBytes)
     for (byte = 0; byte < nBytes; ++byte)
     {
         data = REFLECT_DATA(message[byte]) ^ (remainder >> (WIDTH - 8));
+  		remainder = crcTable[data] ^ (remainder << 8);
+    }
+
+    /*
+     * The final remainder is the CRC.
+     */
+    return (REFLECT_REMAINDER(remainder) ^ FINAL_XOR_VALUE);
+
+}   /* crcFast() */
+
+unsigned long
+crc(deque<char>::iterator& begin, deque<char>::iterator& end)
+{
+    unsigned long  remainder = INITIAL_REMAINDER;
+    unsigned char  data;
+    deque<char>::iterator byte = begin;
+
+
+    /*
+     * Divide the message by the polynomial, a byte at a time.
+     */
+    for (byte = begin; byte != end; ++byte)
+    {
+        data = REFLECT_DATA(*byte) ^ (remainder >> (WIDTH - 8));
+  		remainder = crcTable[data] ^ (remainder << 8);
+    }
+
+    /*
+     * The final remainder is the CRC.
+     */
+    return (REFLECT_REMAINDER(remainder) ^ FINAL_XOR_VALUE);
+
+}   /* crcFast() */
+
+unsigned long
+crc(vector<char>::iterator& begin, vector<char>::iterator& end)
+{
+    unsigned long  remainder = INITIAL_REMAINDER;
+    unsigned char  data;
+    vector<char>::iterator byte = begin;
+
+
+    /*
+     * Divide the message by the polynomial, a byte at a time.
+     */
+    for (byte = begin; byte != end; ++byte)
+    {
+        data = REFLECT_DATA(*byte) ^ (remainder >> (WIDTH - 8));
   		remainder = crcTable[data] ^ (remainder << 8);
     }
 

@@ -16,6 +16,9 @@
 #ifndef _crc_h
 #define _crc_h
 
+#include <deque>
+#include <vector>
+#include <sstream>
 
 //#define FALSE	0
 //#define TRUE	!FALSE
@@ -52,8 +55,6 @@ typedef unsigned short  crc;
 
 #elif defined(CRC32)
 
-typedef unsigned long  crc;
-
 #define CRC_NAME			"CRC-32"
 #define POLYNOMIAL			0x04C11DB7
 #define INITIAL_REMAINDER	0xFFFFFFFF
@@ -70,8 +71,9 @@ typedef unsigned long  crc;
 
 
 void  crcInit(void);
-crc   crcSlow(unsigned char const message[], int nBytes);
-crc   crcFast(unsigned char const message[], int nBytes);
+unsigned long crc(unsigned char const message[], int nBytes);
+unsigned long crc(std::deque<char>::iterator& begin, std::deque<char>::iterator& end);
+unsigned long crc(std::vector<char>::iterator& begin, std::vector<char>::iterator& end);
 
 
 #endif /* _crc_h */
