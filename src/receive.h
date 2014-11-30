@@ -1,8 +1,10 @@
 #ifndef LISTEN_H
 #define LISTEN_H
 
+#include <deque>
 #include <windows.h>
 #include "protocol.h"
+
 
 void SendACK(HANDLE hComm);
 bool ReceiveChar(char expectedChar);
