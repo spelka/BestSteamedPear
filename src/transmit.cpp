@@ -44,12 +44,6 @@ Sleep(TO3 + a randomly generated number)
 
 using namespace std;
 
-bool stopWaiting = false;
-bool rviState = false;
-
-HANDLE hCommPort;
-UINT_PTR IDT_SENDENQTIMER;
-
 DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 {
 	char response = SendChar(ENQ, GetWConn().TO2);
@@ -66,40 +60,19 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 	return NULL;
 }
 
-char WaitForResponse()
-{
-	char response = NUL;
-	bool timeOut;
-
-	//While a response has not been received and timeout is not true
-	while (!timeOut)
-	{
-		response = ReceiveChar();
-
-		// response received
-		if (response != NUL) break;
-	}
-
-	return response;
-}
-
 char SendChar(char charToSend, unsigned toDuration)
 {
-	SetTimer(NULL,                // handle to main window 
-		IDT_SENDENQTIMER,         // timer identifier 
-		toDuration,			      // timeout
-		(TIMERPROC)MyTimerProc);  // timer callback
-
 	if (!WriteFile(GetWConn().hComm, &charToSend, 1, NULL, NULL))
 	{
 		return NUL;
 	}
 
-	return WaitForResponse();
+	return Timer::WaitForResponse(GetWConn().TO2);
 }
 
 char SendPacket()
 {
+	char response;
 	vector<char> packet;
 
 	copy(
@@ -111,9 +84,6 @@ char SendPacket()
 
 		packet.begin()
 		);
-
-	GetWConn().buffer_send.erase(GetWConn().buffer_send.begin(),
-		GetWConn().buffer_send.begin() + PACKET_DATA_SIZE - 1);
 
 	packet.push_back(ETX);
 
@@ -127,33 +97,33 @@ char SendPacket()
 		return NUL;
 	}
 
-	return WaitForResponse();
+	response = Timer::WaitForResponse(GetWConn().TO3);
+
+	switch (response)
+	{
+	case ACK:
+		GetWConn().buffer_send.erase(GetWConn().buffer_send.begin(),
+			GetWConn().buffer_send.begin() + PACKET_DATA_SIZE - 1);
+		break;
+	}
+
+	return response;
 }
 
 void Transmit()
 {
-	/*
-	while there is more data AND send_count is less than max_send
-	In the case that Send Data returns an ACK:
-	more data to send, increment send_count
-	In the case that Send Data returns an NACK:
-	resend data
-	timeoutCount++
-	In the case that Send Data returns an RVI:
-	rviState = true
-	*/
-
-	for (unsigned tries = 0; tries < MAX_SEND; ++tries)
+	for (unsigned send = 0; send < MAX_SEND; ++send)
 	{
 		if (GetWConn().buffer_send.size() <= 0) return;
 
 		char response = SendPacket();
-		if (response == ACK) continue;
-		else 
+
+		if (response == RVI)
+			GetWConn().canTransmit = !GetWConn().canTransmit;
 	}
 }
 
 void ResetState()
 {
-
+	Timer::WaitForResponse(GetWConn().TO4);
 }

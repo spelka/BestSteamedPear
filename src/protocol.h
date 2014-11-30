@@ -30,6 +30,8 @@ struct WConn
 		TO4
 		;
 
+	bool canTransmit;
+
 	std::deque<char> buffer_receive;
 	std::deque<char> buffer_send;
 };
@@ -47,18 +49,13 @@ WConn& GetWConn();
 class Timer
 {
 public:
-	Timer();
-	~Timer();
-
-	char WaitForResponse();
+	static char WaitForResponse(unsigned timeout);
 
 private:
-	VOID CALLBACK TimerCallBack(HWND, UINT, UINT, DWORD);
+	static VOID CALLBACK TimerCallBack(HWND, UINT, UINT, DWORD);
 
-	bool timerCalledBack;
-	char response;
+	static bool timerCalledBack;
+	static char response;
 };
-
-DWORD WINAPI TransmitThread(LPVOID);
 
 #endif // PROTOCOL_H
