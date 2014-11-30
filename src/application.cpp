@@ -80,7 +80,7 @@ struct TextHolder
 	vector<string> txtBuffer;		// text buffer
 	RECT txtRect;					// text bounding box
 	COLORREF color_txt;				// text color
-	UINT format = DT_LEFT | DT_EXPANDTABS;			// text format
+	UINT format;			// text format
 };
 
 vector<TextHolder> TextHolder::txtHolders; // the container for all of the text holders
@@ -152,7 +152,9 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	TextHolder::txtHolders[CHAT_LOG_TX].color_txt = RGB(93, 254, 142);
 	TextHolder::txtHolders[CURRENT_MSG].color_txt = RGB(255, 225, 225);
 
-	TextHolder::txtHolders[CHAT_LOG_TX].format = DT_RIGHT;
+	TextHolder::txtHolders[CHAT_LOG_RX].format = DT_LEFT | DT_EXPANDTABS;
+	TextHolder::txtHolders[CHAT_LOG_TX].format = DT_RIGHT | DT_EXPANDTABS;
+	TextHolder::txtHolders[CURRENT_MSG].format = DT_LEFT | DT_EXPANDTABS;
 
 	// initialize the text buffer
 	ClearScreen(ALL);
