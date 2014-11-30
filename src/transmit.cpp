@@ -104,6 +104,8 @@ char SendPacket()
 {
 	char response;
 	vector<char> packet;
+	unsigned long crcResult;
+	char first, second, third, fourth;
 	vector<char> paddedPacket;
 
 	copy(
@@ -118,15 +120,27 @@ char SendPacket()
 
 	packet.push_back(ETX);
 
+	//Pads the word until packet data size
 	for (unsigned p = 0; p < PACKET_DATA_SIZE - packet.size(); ++p)
 	{
 		packet.push_back(PAD);
 	}
 
-	/*
-	CRC packet 
-	*/
+	//CRC's the word
+	crc(packet.begin(), packet.end());
 
+	first = (char)(crcResult >> 24);
+	second = (char)(crcResult >> 16);
+	third = (char)(crcResult >> 8);
+	fourth = (char)(crcResult >> 0);
+
+	//Pushes the crc to the word
+	packet.push_back(first);
+	packet.push_back(second);
+	packet.push_back(third);
+	packet.push_back(fourth);
+
+	//Appends the control characters needed for the word
 	if (GetWConn().buffer_send.size() > PACKET_DATA_SIZE)
 	{
 		paddedPacket.push_back(ETB);
@@ -135,10 +149,10 @@ char SendPacket()
 	{
 		paddedPacket.push_back(EOT);
 	}
-
 	paddedPacket.push_back((int)GetWConn().synFlip);
 	paddedPacket.insert(paddedPacket.begin(), packet.begin(), packet.end());
 
+	//Sends to port, checks if succesful
 	if (!WriteFile(GetWConn().hComm, &packet, PACKET_DATA_SIZE, NULL, NULL))
 	{
 		return NUL;
