@@ -188,7 +188,7 @@ bool CheckForETX()
 {
 	bool ETXfound = false;
 	deque<char> packet; // some dummy variables to use while we figure out where to put the global
-	deque<char>::iterator packetIterator = packet.begin();
+	deque<char>::iterator packetIterator = GetPrintBuffer().received.begin();
 	deque<char> temp;
 
 	for (unsigned int i = 0; i < 1018; i++)
@@ -205,4 +205,6 @@ bool CheckForETX()
 		packetIterator++;
 	}
 	return ETXfound;
+
 }
+
