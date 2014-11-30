@@ -1,12 +1,5 @@
-#include <windows.h>
-#include <commctrl.h>
-
+#include "application.h"
 char Name[] = "Best Steamed Pear";
-
-LRESULT CALLBACK WndProc(HWND
-	, UINT
-	, WPARAM
-	, LPARAM);
 
 int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	, HINSTANCE hprevInstance         //_In_  HINSTANCE hPrevInstance,

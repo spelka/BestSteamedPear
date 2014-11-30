@@ -18,6 +18,9 @@ const unsigned PACKET_SIZE = 1024; //packet size in bytes
 const unsigned PACKET_DATA_SIZE = 1018; //packet size in bytes
 
 const unsigned MAX_SEND = 10;
+const unsigned MAX_MISS = 10;
+
+//////
 
 struct WConn
 {
@@ -36,6 +39,7 @@ struct WConn
 	std::deque<char> buffer_send;
 };
 
+//////
 
 //the contents of these buffers are meant to be printed to the screen
 struct PrintBuffer
@@ -44,7 +48,13 @@ struct PrintBuffer
     std::deque<char> sent;     //sent is where we put the message that was sent
 };
 
+//////
+
 WConn& GetWConn();
+
+PrintBuffer& GetPrintBuffer();
+
+//////
 
 class Timer
 {
