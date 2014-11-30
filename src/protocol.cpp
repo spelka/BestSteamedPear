@@ -9,11 +9,18 @@ WConn& GetWConn()
 	return wConn;
 }
 
+//////
+
 PrintBuffer& GetPrintBuffer()
 {
     static PrintBuffer pBuff;
     return pBuff;
 }
+
+//////
+
+char Timer::response = NUL;
+bool Timer::timerCalledBack = false;
 
 char Timer::WaitForResponse(unsigned timeout)
 {
@@ -29,6 +36,8 @@ char Timer::WaitForResponse(unsigned timeout)
 		// response received
 		if (response != NUL) break;
 	}
+
+	timerCalledBack = false;
 
 	return response;
 }
