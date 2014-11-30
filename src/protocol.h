@@ -18,7 +18,7 @@ const unsigned PACKET_SIZE = 1024; //packet size in bytes
 const unsigned PACKET_DATA_SIZE = 1018; //packet size in bytes
 
 const unsigned MAX_SEND = 10;
-const unsigned MAX_MISS = 10
+const unsigned MAX_MISS = 10;
 
 //////
 
