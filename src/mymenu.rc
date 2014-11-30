@@ -1,0 +1,9 @@
+#include "mymenu.h"
+
+MYMENU MENU
+BEGIN
+    MENUITEM "&Connect",                    ID_CONNECT
+	MENUITEM "&Clear History",				ID_CLS
+    MENUITEM "&Help",                       ID_HELP
+    MENUITEM "&Exit to CMD",                ID_EXIT
+END

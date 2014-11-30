@@ -39,6 +39,7 @@ struct WConn
 	std::deque<char> buffer_send;
 
 	bool synFlip;
+	bool isConnected;
 };
 
 //////
@@ -49,12 +50,6 @@ struct PrintBuffer
     std::deque<char> received; //received is where we put messages that are received
     std::deque<char> sent;     //sent is where we put the message that was sent
 };
-
-//////
-
-WConn& GetWConn();
-
-PrintBuffer& GetPrintBuffer();
 
 //////
 
@@ -69,5 +64,13 @@ private:
 	static bool timerCalledBack;
 	static char response;
 };
+
+//////
+
+WConn& GetWConn();
+PrintBuffer& GetPrintBuffer();
+
+bool Disconnect();
+bool Connect();
 
 #endif // PROTOCOL_H

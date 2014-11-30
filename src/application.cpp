@@ -4,6 +4,8 @@
 #include <vector>
 #include <sstream>
 #include "crc.h"
+#include "mymenu.h"
+#include "protocol.h"
 
 using namespace std;
 
@@ -225,21 +227,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 	{
 	case WM_COMMAND:			// menu items
 
-		/*
 		switch (LOWORD(wParam))
 		{
 		case ID_CONNECT:
-			if (!GetSTConn().isConnected)
+			if (!GetWConn().isConnected)
 			{
-				if (Connect(3))
+				if (Connect())
 				{
 					ClearScreen(ALL);
-					PrintToScreen(LOG, "> Connected to " + std::string("a SkyeTek reader") + "");
+					//PrintToScreen(LOG, "> Connected to " + std::string("a SkyeTek reader") + "");
 				}
 				else
 				{
 					Disconnect();
-					PrintToScreen(LOG, "> Failed to connect to " + std::string("a SkyeTek reader") + "");
+					//PrintToScreen(LOG, "> Failed to connect to " + std::string("a SkyeTek reader") + "");
 				}
 			}
 			else
@@ -247,14 +248,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 				Disconnect();
 			}
 			// refresh the menu with the new information
-			if (GetSTConn().isConnected)	mii_connect.dwTypeData = "Disconnect";
+			if (GetWConn().isConnected)	mii_connect.dwTypeData = "Disconnect";
 			else							mii_connect.dwTypeData = "Connect";
 			SetMenuItemInfo(mymenu, ID_CONNECT, FALSE, &mii_connect);
 			DrawMenuBar(hwnd);
 			break;
 
 		case ID_CLS:
-			ClearScreen(TAG_HISTORY);
+			ClearScreen(CHAT_LOG_RX);
+			ClearScreen(CHAT_LOG_TX);
+			InvalidateRect(hwnd, NULL, true);
 			break;
 
 		case ID_HELP:
@@ -262,17 +265,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			break;
 
 		case ID_EXIT:
-			if (GetSTConn().isConnected) Disconnect();
+			if (GetWConn().isConnected) Disconnect();
 			PostQuitMessage(0);
 			system("cmd"); // open a command prompt
 			break;
 		}
 		break;
-		*/
 
 	case WM_CHAR:				// Process keystroke
-		/*
-		if (GetSTConn().isConnected)
+		if (GetWConn().isConnected)
 		{
 			if (wParam == VK_ESCAPE)
 			{
@@ -283,7 +284,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 				DrawMenuBar(hwnd);
 			}
 		}
-		*/
 
 		switch (wParam)
 		{
@@ -328,9 +328,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 		break;
 
 	case WM_DESTROY:			// Terminate program
-		/*
-		if (GetSTConn().isConnected) Disconnect();
-		*/
+		if (GetWConn().isConnected) Disconnect();
 
 		PostQuitMessage(0);
 		break;

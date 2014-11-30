@@ -19,25 +19,10 @@
 -- This is the code that takes care of all the trasmitting that is done in this program.
 ----------------------------------------------------------------------------------------------------------------------*/
 
-
 #include "protocol.h"
 #include "receive.h"
 
 using namespace std;
-
-WConn& GetWConn()
-{
-	static WConn wConn;
-	return wConn;
-}
-
-//////
-
-PrintBuffer& GetPrintBuffer()
-{
-    static PrintBuffer pBuff;
-    return pBuff;
-}
 
 //////
 
@@ -93,4 +78,30 @@ VOID CALLBACK Timer::TimerCallBack(
 	DWORD dwTime)     // current system time 
 {
 	timerCalledBack = true;
+}
+
+//////
+
+WConn& GetWConn()
+{
+	static WConn wConn;
+	return wConn;
+}
+
+//////
+
+PrintBuffer& GetPrintBuffer()
+{
+    static PrintBuffer pBuff;
+    return pBuff;
+}
+
+bool Disconnect()
+{
+	return false;
+}
+
+bool Connect()
+{
+	return false;
 }
