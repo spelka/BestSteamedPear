@@ -58,20 +58,14 @@ bool Timer::timerCalledBack = false;
 -- NOTES:
 -- This creates a timer that attempts to receive a char from the received buffer until timeout is exceeded.
 ----------------------------------------------------------------------------------------------------------------------*/
-char Timer::WaitForResponse(unsigned timeout)
+char Timer::WaitFor(unsigned timeout)
 {
 	SetTimer(NULL,					// handle to main window 
 		42,							// timer identifier 
 		timeout,					// timeout
 		(TIMERPROC)TimerCallBack);	// timer callback
 
-	while (!timerCalledBack)
-	{
-		response = ReceiveChar();
-
-		// response received
-		if (response != NUL) break;
-	}
+	while (!timerCalledBack);
 
 	timerCalledBack = false;
 
