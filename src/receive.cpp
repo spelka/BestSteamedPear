@@ -67,7 +67,17 @@ bool receivingMode = false;
 
 COMMTIMEOUTS timeouts = { 0, 0, 0, 0, 0 };
 
+//---------------------------------------------------------------------------------------------
 //receives a character from the comm port and checks if the received char is what was expected
+//
+//Created On: Wednesday, November 19
+//
+//Designed By: Sebastian Pelka
+//
+//Modified By:	Georgi Hristov, November 29, 2014
+//				Sebastian Pelka, November 29, 2014
+//
+//---------------------------------------------------------------------------------------------
 char ReadChar(WConn& w, DWORD timeout)
 {
 	timeouts.ReadIntervalTimeout = timeout;
@@ -93,6 +103,14 @@ char ReadChar(WConn& w, DWORD timeout)
 //
 // Source: http://msdn.microsoft.com/en-us/library/ff802693.aspx
 //
+//Created On: Wednesday, November 19
+//
+//Designed By: Sebastian Pelka
+//
+//Modified By:	Georgi Hristov, November 29, 2014
+//				Sebastian Pelka, November 29, 2014
+//
+//---------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 bool FillRxBuffer(WConn& w)
 {
@@ -156,7 +174,35 @@ void validateData()
 
 }
 
-void CheckForETX()
+//-------------------------------------------------------------------------------------------------
+// Iterates over the WConn reveived buffer if the CRC validator confirmed the received data is good.
+// This function pulls the data out of the packet structure and adds it to the print buffer, which
+// contains all validated message data so far.
+//
+// Returns true if the ETX character is found.
+//
+// Created On: November 29, 2014 by Sebastian Pelka
+//
+//--------------------------------------------------------------------------------------------------
+bool CheckForETX()
 {
+	bool ETXfound = false;
+	deque<char> packet; // some dummy variables to use while we figure out where to put the global
+	deque<char>::iterator packetIterator = packet.begin();
+	deque<char> temp;
 
+	for (unsigned int i = 0; i < 1018; i++)
+	{
+		if ((*packetIterator) == ETX)
+		{
+			ETXfound = true;
+			break;
+		}
+		else
+		{
+			temp.push_back(*packetIterator);
+		}
+		packetIterator++;
+	}
+	return ETXfound;
 }
