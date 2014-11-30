@@ -1,39 +1,25 @@
-/*
-GLOBAL VARIABLES TO2, TO3
-Booleans: stopWaiting, ackReceived, rviState
-//Transmit Thread
-stopWaiting = ackReceived = rviState = false
-Send ENQ
-//Send ENQ
-Set a timer that has the length of TO2 which calls the Reset State function when it ends
-while ACK has not been received and stopWaiting is false
-if the software receives an ACK
-ackReceived = true
-Transmit Mode
-if rviState
-return
-else
-Reset State
-//Transmit Mode
-while there is more data AND send_count is less than max_send
-In the case that Send Data returns an ACK:
-more data to send, increment send_count
-In the case that Send Data returns an NACK:
-resend data
-timeoutCount++
-In the case that Send Data returns an RVI:
-rviState = true
-//Send Data
-Take data out of buffer
-add crc to data
-send
-Wait for response
-Return response
-//Reset State
-stopWaiting = true
-if !ackReceived
-Sleep(TO3 + a randomly generated number)
-*/
+/*------------------------------------------------------------------------------------------------------------------
+-- SOURCE FILE:		trasmit.cpp
+--
+-- PROGRAM:			BestSteamPear
+--
+-- FUNCTIONS:		DWORD WINAPI TransmitThread(LPVOID);
+--					char SendChar(char charToSend, unsigned toDuration);
+--					char SendPacket();
+--					void Transmit();
+--					void ResetState();
+--
+-- DATE: 			November 29, 2014
+--
+-- REVISIONS: 		NONE
+--
+-- DESIGNER: 		Melvin Loho, Alex Lam, Sebastian Pelka, Georgi Hristov
+--
+-- PROGRAMMER: 		Melvin Loho, Alex Lam
+--
+-- NOTES:
+-- This is the code that takes care of all the trasmitting that is done in this program.
+----------------------------------------------------------------------------------------------------------------------*/
 
 #include "transmit.h"
 #include "protocol.h"
@@ -112,14 +98,26 @@ char SendPacket()
 
 void Transmit()
 {
+	int missCount = 0;
+
 	for (unsigned send = 0; send < MAX_SEND; ++send)
 	{
 		if (GetWConn().buffer_send.size() <= 0) return;
 
+		//Try again if receiver replies NULL or NAK
 		char response = SendPacket();
+		while (response == NUL && missCount < MAX_MISS)
+		{
+			missCount++;
+			char response = SendPacket();
+		}
 
+		//If receiver replies with RVI
 		if (response == RVI)
+		{
 			GetWConn().canTransmit = !GetWConn().canTransmit;
+			break;
+		}
 	}
 }
 
