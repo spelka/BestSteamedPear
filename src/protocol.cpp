@@ -7,6 +7,12 @@ WConn& GetWConn()
 	return wConn;
 }
 
+PrintBuffer& GetPrintBuffer()
+{
+    static PrintBuffer pBuff;
+    return pBuff;
+}
+
 Timer::Timer()
 	:timerCalledBack(false)
 	,response(NUL)

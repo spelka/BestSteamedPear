@@ -34,6 +34,14 @@ struct WConn
 	std::deque<char> buffer_send;
 };
 
+
+//the contents of these buffers are meant to be printed to the screen
+struct PrintBuffer
+{
+    std::deque<char> received; //received is where we put messages that are received
+    std::deque<char> sent;     //sent is where we put the message that was sent
+};
+
 WConn& GetWConn();
 
 class Timer

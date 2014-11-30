@@ -23,20 +23,7 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
     std::stringstream ss;
 
     ss << "The check value for the " << CRC_NAME << " standard is 0x" << CHECK_VALUE << std::endl;
-
-	/*
-	 * Print the check value for the selected CRC algorithm.
-	 */
-
     ss << "The crcSlow() of \"123456789\" is 0x" << crcSlow(test, strlen(reinterpret_cast<char*>(test))) << std::endl;
-	
-	/*
-	 * Compute the CRC of the test message, slowly.
-	 */
-	
-	/*
-	 * Compute the CRC of the test message, more efficiently.
-	 */
 	crcInit();
 	ss << "The crcFast() of \"123456789\" is 0x" << crcFast(test, strlen(reinterpret_cast<char*>(test))) << std::endl;
     OutputDebugString( ss.str().c_str() );
