@@ -1,7 +1,18 @@
-#ifndef APP_H
-#define APP_H
+#ifndef APPLICATION_H
+#define APPLICATION_H
 
-#include <windows.h>
+#include <Windows.h>
+#include <string>
+
+extern HWND hwnd;
+
+struct GResources;
+struct TextHolder;
+
+enum txtholder_idx
+{
+	CHAT_LOG, CURRENT_MSG, ALL
+};
 
 int WINAPI WinMain(
 	HINSTANCE
@@ -17,4 +28,12 @@ LRESULT CALLBACK WndProc(
 	, LPARAM
 	);
 
-#endif // APP_H
+void PaintComponents();
+
+void PrintToScreen(txtholder_idx whichHolder, std::string s, bool newlinebefore = false, bool newlineafter = true);
+
+void RedrawText(txtholder_idx whichHolder = ALL);
+
+void ClearScreen(txtholder_idx whichHolder);
+
+#endif // APPLICATION_H
