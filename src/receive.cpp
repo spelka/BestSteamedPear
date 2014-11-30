@@ -1,5 +1,8 @@
+#include <deque>
 #include "receive.h"
 #include "protocol.h"
+
+using namespace std;
 
 /*
 GLOBAL VARIABLES TO2, TO3
@@ -61,50 +64,23 @@ bool receivingMode = false;
 //send RVI
 //on ACK of RVI, go to transmission thread
 
-
-void SendACK(HANDLE hComm)
-{
-	//Send an ACK
-	if (!WriteFile(hComm, &ACK, 1, NULL, NULL))
-	{
-		MessageBox(NULL, TEXT("Error: Failed to send ACK"), TEXT("Error"), MB_OK | MB_ICONERROR);
-	}
-
-	return;
-}
+COMMTIMEOUTS timeouts = { 0, 0, 0, 0, 0 };
 
 //receives a character from the comm port and checks if the received char is what was expected
-bool ReceiveChar(char expectedChar)
+char ReadChar(WConn& w, DWORD timeout)
 {
-
-	char received;
+	timeouts.ReadIntervalTimeout = timeout;
+	char received = NUL;
+	// set timeouts
+	if (!SetCommTimeouts(w.hComm, &timeouts))
+	{
+		// Error setting time-outs.
+	}
 
 	//read in character from comm port
-	//if you fail to read in a file, return false
-	if (!ReadFile(GetWConn().hComm, &received, 1, NULL, NULL))
-	{
-		return false;
-	}
-	//if read was successful, compare the read in character to the expected character
-	if (expectedChar == received)
-	{
-		return true;
-	}
-	return false;
-}
-
-//receives a character from the comm port and returns it
-char ReceiveChar()
-{
-	char received;
-
-	//read in character from comm port
-	//if you fail to read in a file, return false
-	if (!ReadFile(GetWConn().hComm, &received, 1, NULL, NULL))
-	{
-		return NUL;
-	}
-	//if read was successful, return the read-in character
+	//if you fail to read in a file, return NUL
+	ReadFile(GetWConn().hComm, &received, 1, NULL, NULL);
+	
 	return received;
 }
 
@@ -117,9 +93,10 @@ char ReceiveChar()
 // Source: http://msdn.microsoft.com/en-us/library/ff802693.aspx
 //
 //------------------------------------------------------------------------------
-bool ReceivePacket(WConn& w)
+bool FillRxBuffer(WConn& w)
 {
 	char controlChar;
+	char buffer[PACKET_SIZE];
 	DWORD dwCommEvent;
 	DWORD dwRead;
 
@@ -135,9 +112,22 @@ bool ReceivePacket(WConn& w)
 		{
 			do
 			{
-				if (ReadFile(w.hComm, &w.buffer_receive, sizeof(PACKET_SIZE)-1, NULL, NULL))
+				if (ReadFile(w.hComm, &controlChar, 1, NULL, NULL))
 				{
-					//read in packet
+					//if the data in the buffer is a packet
+					if (controlChar == EOT || controlChar == ETB)
+					{
+						//if you successfully read the packet in
+						if (ReadFile(w.hComm, &dwRead, PACKET_SIZE - 1, NULL, NULL))
+						{
+							//push the characters into the receive buffer
+							for (unsigned int i = 1; i < PACKET_SIZE; i++)
+							{
+								(w.buffer_receive).push_back(buffer[i]);
+							}
+						}
+					}
+					
 				}
 				else
 				{
@@ -160,22 +150,12 @@ void invalidData()
 
 }
 
-void packetValidator()
+void validData()
 {
 
 }
 
-void timeOut1()
-{
-
-}
-
-void validDataEOT()
-{
-
-}
-
-void validDataETB()
+void CheckForETX()
 {
 
 }
