@@ -117,6 +117,17 @@ bool FillRxBuffer()
 	return true;
 }
 
+
+//-------------------------------------------------------------------------------------------------
+// Iterates over the WConn reveived buffer if the CRC validator confirmed the received data is good.
+// This function pulls the data out of the packet structure and adds it to the print buffer, which
+// contains all validated message data so far.
+//
+// Returns true if the ETX character is found.
+//
+// Created On: November 29, 2014 by Sebastian Pelka
+//
+//--------------------------------------------------------------------------------------------------
 bool validateData()
 {
     WConn w = GetWConn();
@@ -131,17 +142,6 @@ bool validateData()
     return true;
 }
 
-//-------------------------------------------------------------------------------------------------
-// Iterates over the WConn reveived buffer if the CRC validator confirmed the received data is good.
-// This function pulls the data out of the packet structure and adds it to the print buffer, which
-// contains all validated message data so far.
-//
-// Returns true if the ETX character is found.
-//
-// Created On: November 29, 2014 by Sebastian Pelka
-//
-//--------------------------------------------------------------------------------------------------
-=======
 /*------------------------------------------------------------------------------------------------------------------
 -- FUNCTION: 	CheckForETX
 --
@@ -162,7 +162,7 @@ bool validateData()
 -- function pulls the data out of the packet structure and adds it to the print buffer, which containes all the
 -- validated data to be printed to the screen so far.
 ----------------------------------------------------------------------------------------------------------------------*/
->>>>>>> origin/master
+
 bool CheckForETX()
 {
 	bool ETXfound = false;
