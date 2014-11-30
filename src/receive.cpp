@@ -164,14 +164,23 @@ bool FillRxBuffer()
 	return true;
 }
 
-void invalidData()
+bool invalidData()
 {
+    WConn w = GetWConn();
+    unsigned long crcResult = crc( w.buffer_receive.begin() + 2, w.buffer_receive.begin() + 3 + PACKET_SIZE );
 
+    deque<char>::iterator it = w.buffer_receive.begin() + 3 + PACKET_SIZE;
+    for( int i = 0; i < 4; ++i )
+    {
+        if( (char)crcResult != *it );
+            return false;
+    }
+    return true;
 }
 
 void validateData()
 {
-
+    
 }
 
 //-------------------------------------------------------------------------------------------------
