@@ -5,6 +5,16 @@
 #include <windows.h>
 #include "protocol.h"
 
+class SyncTracker
+{
+	public:
+		static bool CheckSync(char syncbit);
+		static void FlagForReset();
+	private:
+		static bool firstSync;
+		static bool previousSync;
+};
+
 char ReadChar(DWORD timeout);
 bool FillRxBuffer();
 bool CheckForETX();

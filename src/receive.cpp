@@ -7,6 +7,37 @@ using namespace std;
 bool receivingMode = false;
 COMMTIMEOUTS timeouts = { 0, 0, 0, 0, 0 };
 
+bool SyncTracker::firstSync = true;
+bool SyncTracker::previousSync = true;
+
+bool SyncTracker::CheckSync(char syncbit)
+{
+	if (!firstSync)
+	{
+
+		if (previousSync != syncbit)
+		{
+			previousSync = syncbit;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	else
+	{
+		firstSync = false;
+		previousSync = syncbit;
+	}
+}
+
+
+void SyncTracker::FlagForReset()
+{
+	firstSync = true;
+}
+
 /*------------------------------------------------------------------------------------------------------------------
 -- FUNCTION: 	ReadChar
 --
@@ -69,6 +100,7 @@ bool FillRxBuffer()
 {
 	char controlChar;
 	char buffer[PACKET_SIZE];
+	char syncBit;
 	DWORD dwCommEvent;
 	DWORD dwRead = 0;
 
@@ -89,14 +121,28 @@ bool FillRxBuffer()
 					//if the data in the buffer is a packet
 					if (controlChar == EOT || controlChar == ETB)
 					{
-						//if you successfully read the packet in
-						if (ReadFile(GetWConn().hComm, &dwRead, PACKET_SIZE - 1, NULL, NULL))
+
+						//check sync bits
+						if (ReadFile(GetWConn().hComm, &syncBit, 1, NULL, NULL))
 						{
-							//push the characters into the receive buffer
-							for (unsigned int i = 1; i < PACKET_SIZE; i++)
+							//if the sync bit is OK
+							if (SyncTracker::CheckSync(syncBit))
 							{
-								(GetWConn().buffer_receive).push_back(buffer[i]);
+								//if you successfully read the packet in
+								if (ReadFile(GetWConn().hComm, &dwRead, PACKET_SIZE - 1, NULL, NULL))
+								{
+									//push the characters into the receive buffer
+									for (unsigned int i = 1; i < PACKET_SIZE; i++)
+									{
+										(GetWConn().buffer_receive).push_back(buffer[i]);
+									}
+								}
 							}
+						}
+						//if EOT, reset Sync  Bit
+						if (controlChar == EOT)
+						{
+							SyncTracker::FlagForReset();
 						}
 					}
 					
@@ -211,4 +257,5 @@ void ClearPrintBuffer()
 		GetPrintBuffer().received.clear();
 	}
 }
+
 
