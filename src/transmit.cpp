@@ -24,6 +24,7 @@
 #include "transmit.h"
 #include "protocol.h"
 #include "receive.h"
+#include "crc.h"
 
 #include <vector>
 #include <algorithm>
@@ -82,7 +83,7 @@ char SendChar(char charToSend, unsigned toDuration)
 		return NUL;
 	}
 
-	return Timer::WaitForResponse(GetWConn().TO2);
+	return ReadChar(GetWConn().TO2);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -127,7 +128,7 @@ char SendPacket()
 	}
 
 	//CRC's the word
-	crc(packet.begin(), packet.end());
+	crcResult = crc(packet.begin(), packet.end());
 
 	first = (char)(crcResult >> 24);
 	second = (char)(crcResult >> 16);
@@ -158,7 +159,7 @@ char SendPacket()
 		return NUL;
 	}
 
-	response = Timer::WaitForResponse(GetWConn().TO3);
+	response = ReadChar(GetWConn().TO3);
 
 	switch (response)
 	{
@@ -210,6 +211,8 @@ void Transmit()
 			break;
 		}
 	}
+
+	ResetState();
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -229,5 +232,5 @@ void Transmit()
 ----------------------------------------------------------------------------------------------------------------------*/
 void ResetState()
 {
-	Timer::WaitForResponse(GetWConn().TO4);
+	Timer::WaitFor(GetWConn().TO4);
 }

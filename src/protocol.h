@@ -61,7 +61,7 @@ PrintBuffer& GetPrintBuffer();
 class Timer
 {
 public:
-	static char WaitForResponse(unsigned timeout);
+	static char WaitFor(unsigned timeout);
 
 private:
 	static VOID CALLBACK TimerCallBack(HWND, UINT, UINT, DWORD);

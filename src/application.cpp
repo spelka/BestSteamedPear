@@ -105,7 +105,7 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	MSG msg;
 	WNDCLASSEX Wcl;
 	LOGFONT logFont;
-	const char Name[] = "RFID Terminal";
+	const char Name[] = "Best Steamed Pear";
 
 	// set colors
 	GResources::color_bk = RGB(83, 83, 83);
@@ -236,15 +236,15 @@ void PaintComponents()
 	InflateRect(&rc_chatlog, inflateAmount, inflateAmount);
 
 	// Set txt holders's new rects
-	TextHolder::txtHolders[CURRENT_MSG].txtRect = rc_currmsg;
 	TextHolder::txtHolders[CHAT_LOG].txtRect = rc_chatlog;
+	TextHolder::txtHolders[CURRENT_MSG].txtRect = rc_currmsg;
 
 	// Set and draw titles
 	TextHolder::txtHolders[CHAT_LOG].
 		txtTitle = std::string("Chat Log\n")
-		.append(std::string((rc_chatlog.right - rc_chatlog.left) / GResources::textSizeX, breakline)),
+		.append(std::string((rc_chatlog.right - rc_chatlog.left) / GResources::textSizeX, breakline));
 
-		TextHolder::txtHolders[CURRENT_MSG].
+	TextHolder::txtHolders[CURRENT_MSG].
 		txtTitle = std::string("Enter message\n")
 		.append(std::string((rc_currmsg.right - rc_currmsg.left) / GResources::textSizeX, breakline));
 
