@@ -291,7 +291,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			if (currMsg.empty()) break;
 
 			PrintToScreen(CHAT_LOG_TX, currMsg);
-			PrintToScreen(CHAT_LOG_RX, ">");
+			PrintToScreen(CHAT_LOG_RX, "");
+
+			ClearScreen(CURRENT_MSG);
+			break;
+
+		case VK_ESCAPE:
+			currMsg = TextHolder::txtHolders[CURRENT_MSG].txtBuffer.back();
+
+			if (currMsg.empty()) break;
+
+			PrintToScreen(CHAT_LOG_RX, currMsg);
+			PrintToScreen(CHAT_LOG_TX, "");
 
 			ClearScreen(CURRENT_MSG);
 			break;
@@ -366,7 +377,7 @@ void PaintComponents()
 
 	rc_chatlog = rc_currmsg = rcWindow;
 
-	rc_chatlog.bottom *= (0.8);
+	rc_chatlog.bottom *= (0.7);
 
 	rc_currmsg.top = rc_chatlog.bottom;
 
