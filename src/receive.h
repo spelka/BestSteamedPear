@@ -5,16 +5,9 @@
 #include <windows.h>
 #include "protocol.h"
 
-
-void SendACK(HANDLE hComm);
-bool ReceiveChar(char expectedChar);
-char ReceiveChar();
-void receivePacket(WConn* w);
-void invalidData();
-void packetValidator();
-void timeOut1();
-void validDataEOT();
-void validDataETB();
-
+char ReadChar(DWORD timeout);
+bool FillRxBuffer();
+bool CheckForETX();
+void ClearPrintBuffer();
 
 #endif // LISTEN_H

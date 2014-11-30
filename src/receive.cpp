@@ -208,3 +208,18 @@ bool CheckForETX()
 
 }
 
+/*---------------------------------------------------------------------------------------------------
+-- Checks to see if the reciveded PrintBuffer is empty. If it is not, it clears the print buffer
+-- and leaves it with a size of zero.
+--
+--
+--
+----------------------------------------------------------------------------------------------------*/
+void ClearPrintBuffer()
+{
+	if (!GetPrintBuffer().received.empty())
+	{
+		GetPrintBuffer().received.clear();
+	}
+}
+
