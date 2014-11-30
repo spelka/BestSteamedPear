@@ -121,7 +121,7 @@ bool ReceivePacket(WConn& w)
 {
 	char controlChar;
 	DWORD dwCommEvent;
-	DWORD dwRead;
+	DWORD dwRead = 0;
 
 	//if the comm mask is successfully set to watch for receiving character events
 	if (!SetCommMask(w.hComm, EV_RXCHAR))

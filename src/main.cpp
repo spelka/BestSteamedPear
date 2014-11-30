@@ -27,22 +27,17 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	/*
 	 * Print the check value for the selected CRC algorithm.
 	 */
-    OutputDebugString( ss.str().c_str() );
-
-    ss.clear();
 
     ss << "The crcSlow() of \"123456789\" is 0x" << crcSlow(test, strlen(reinterpret_cast<char*>(test))) << std::endl;
 	
 	/*
 	 * Compute the CRC of the test message, slowly.
 	 */
-    OutputDebugString( ss.str().c_str() );
 	
 	/*
 	 * Compute the CRC of the test message, more efficiently.
 	 */
 	crcInit();
-    ss.clear();
 	ss << "The crcFast() of \"123456789\" is 0x" << crcFast(test, strlen(reinterpret_cast<char*>(test))) << std::endl;
     OutputDebugString( ss.str().c_str() );
 	
