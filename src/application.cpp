@@ -211,6 +211,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 		.append("\nby:")
 		.append("\n+ Melvin Loho | A00885598")
 		.append("\n+ Alex Lam | A00880208")
+		.append("\n+ Georgi Hristov | A00795026")
 		.append("\n")
 		.append("\n[Menu Items]")
 		.append("\n> Connect/Disconnect - Connect to / disconnects from a SkyeTek reader.")
@@ -218,6 +219,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 		.append("\n> Help - Brings up this menu!")
 		.append("\n> Exit to CMD - Closes the connection and the window, while opening a command window.")
 		;
+    
+    static int newLines = 1;
 
 	string currMsg;
 
@@ -284,7 +287,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			}
 		}
 		*/
-
 		switch (wParam)
 		{
 		case VK_RETURN:
@@ -293,7 +295,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			if (currMsg.empty()) break;
 
 			PrintToScreen(CHAT_LOG_TX, currMsg);
-			PrintToScreen(CHAT_LOG_RX, "");
+            for( ; newLines > 0; --newLines )
+			    PrintToScreen(CHAT_LOG_RX, "");
+            ++newLines;
 
 			ClearScreen(CURRENT_MSG);
 			break;
@@ -304,13 +308,23 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			if (currMsg.empty()) break;
 
 			PrintToScreen(CHAT_LOG_RX, currMsg);
-			PrintToScreen(CHAT_LOG_TX, "");
+            for( ; newLines > 0; --newLines )
+			    PrintToScreen(CHAT_LOG_TX, "");
+            ++newLines;
 
 			ClearScreen(CURRENT_MSG);
 			break;
 
+        case 0x0A:
+            ++newLines;
+			PrintToScreen(CURRENT_MSG, wParam);
+            break;
+
 		default:
 			PrintToScreen(CURRENT_MSG, wParam);
+            //if( TextHolder::txtHolders[CURRENT_MSG].txtBuffer.back().size() == 0 )
+                //++newLines;
+            break;
 		}
 		break;
 
