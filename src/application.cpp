@@ -76,10 +76,11 @@ struct TextHolder
 {
 	static vector<TextHolder> txtHolders;
 
-	string txtTitle;				// the title
-	vector<string> txtBuffer;		// the text buffer
-	RECT txtRect;					// the text bounding box
-	COLORREF color_txt;				// the text color
+	string txtTitle;				// title
+	vector<string> txtBuffer;		// text buffer
+	RECT txtRect;					// text bounding box
+	COLORREF color_txt;				// text color
+	UINT format = DT_LEFT | DT_EXPANDTABS;			// text format
 };
 
 vector<TextHolder> TextHolder::txtHolders; // the container for all of the text holders
@@ -143,11 +144,15 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	GResources::hFont = CreateFontIndirect(&logFont);
 
 	// initialize text holders
-	TextHolder::txtHolders.push_back(TextHolder()); // CHAT_LOG
+	TextHolder::txtHolders.push_back(TextHolder()); // CHAT_LOG_RX
+	TextHolder::txtHolders.push_back(TextHolder()); // CHAT_LOG_TX
 	TextHolder::txtHolders.push_back(TextHolder()); // CURRENT_MSG
 
-	TextHolder::txtHolders[CHAT_LOG].color_txt = RGB(225, 225, 225);
-	TextHolder::txtHolders[CURRENT_MSG].color_txt = RGB(200, 200, 255);
+	TextHolder::txtHolders[CHAT_LOG_RX].color_txt = RGB(162, 196, 253);
+	TextHolder::txtHolders[CHAT_LOG_TX].color_txt = RGB(93, 254, 142);
+	TextHolder::txtHolders[CURRENT_MSG].color_txt = RGB(255, 225, 225);
+
+	TextHolder::txtHolders[CHAT_LOG_TX].format = DT_RIGHT;
 
 	// initialize the text buffer
 	ClearScreen(ALL);
@@ -211,6 +216,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 		.append("\n> Help - Brings up this menu!")
 		.append("\n> Exit to CMD - Closes the connection and the window, while opening a command window.")
 		;
+
+	string currMsg;
 
 	switch (Message)
 	{
@@ -276,7 +283,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 		}
 		*/
 
-		PrintToScreen(CURRENT_MSG, (char)wParam);
+		switch (wParam)
+		{
+		case VK_RETURN:
+			currMsg = TextHolder::txtHolders[CURRENT_MSG].txtBuffer.back();
+
+			if (currMsg.empty()) break;
+
+			PrintToScreen(CHAT_LOG_TX, currMsg);
+			PrintToScreen(CHAT_LOG_RX, ">");
+
+			ClearScreen(CURRENT_MSG);
+			break;
+
+		default:
+			PrintToScreen(CURRENT_MSG, wParam);
+		}
 		break;
 
 	case WM_PAINT:				// Process a repaint message
@@ -288,7 +310,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 
 	case WM_GETMINMAXINFO:		// Give app the min/max window sizes
 		minmaxInfo = (MINMAXINFO*)lParam;
-		minmaxInfo->ptMinTrackSize.x = 800;
+		minmaxInfo->ptMinTrackSize.x = 600;
 		minmaxInfo->ptMinTrackSize.y = 600;
 		break;
 
@@ -369,19 +391,20 @@ void PaintComponents()
 	InflateRect(&rc_chatlog, inflateAmount, inflateAmount);
 
 	// Set txt holders's new rects
-	TextHolder::txtHolders[CHAT_LOG].txtRect = rc_chatlog;
+	TextHolder::txtHolders[CHAT_LOG_RX].txtRect = rc_chatlog;
+	TextHolder::txtHolders[CHAT_LOG_TX].txtRect = rc_chatlog;
 	TextHolder::txtHolders[CURRENT_MSG].txtRect = rc_currmsg;
 
 	// Set and draw titles
-	TextHolder::txtHolders[CHAT_LOG].
-		txtTitle = std::string("Chat Log\n")
+	TextHolder::txtHolders[CHAT_LOG_RX].
+		txtTitle = std::string("[= Chat Log =]\n")
 		.append(std::string((rc_chatlog.right - rc_chatlog.left) / GResources::textSizeX, breakline));
 
 	TextHolder::txtHolders[CURRENT_MSG].
-		txtTitle = std::string("Enter message\n")
+		txtTitle = std::string("[= Enter Message =]\n")
 		.append(std::string((rc_currmsg.right - rc_currmsg.left) / GResources::textSizeX, breakline));
 
-	DrawText(hDC, TEXT(TextHolder::txtHolders[CHAT_LOG].
+	DrawText(hDC, TEXT(TextHolder::txtHolders[CHAT_LOG_RX].
 		txtTitle.c_str()), -1, &rc_chatlog, DT_CENTER);
 	DrawText(hDC, TEXT(TextHolder::txtHolders[CURRENT_MSG].
 		txtTitle.c_str()), -1, &rc_currmsg, DT_CENTER);
@@ -439,7 +462,24 @@ void PrintToScreen(txtholder_idx whichHolder, char c)
 {
 	HDC hdc = GResources::GetDC();
 
-	TextHolder::txtHolders[whichHolder].txtBuffer.back().push_back(c);
+	switch (c)
+	{
+	case VK_BACK:
+		if (TextHolder::txtHolders[whichHolder].txtBuffer.back().empty()) break;
+
+		TextHolder::txtHolders[whichHolder].txtBuffer.back().pop_back();
+		TextHolder::txtHolders[whichHolder].txtBuffer.back().push_back(' ');
+		RedrawText(whichHolder);
+		TextHolder::txtHolders[whichHolder].txtBuffer.back().pop_back();
+		break;
+
+	case VK_TAB:
+		TextHolder::txtHolders[whichHolder].txtBuffer.back().push_back('\t');
+		break;
+
+	default:
+		TextHolder::txtHolders[whichHolder].txtBuffer.back().push_back(c);
+	}
 
 	ReleaseDC(hwnd, hdc); // Release device context
 
@@ -486,7 +526,7 @@ void RedrawText(txtholder_idx whichHolder)
 
 			// draw final string
 			SetTextColor(hdc, TextHolder::txtHolders[t].color_txt);
-			DrawText(hdc, currTxt.c_str(), -1, &TextHolder::txtHolders[t].txtRect, DT_LEFT);
+			DrawTextEx(hdc, const_cast<char *>(currTxt.c_str()), -1, &TextHolder::txtHolders[t].txtRect, TextHolder::txtHolders[t].format, NULL);
 		}
 	}
 	else
@@ -501,7 +541,7 @@ void RedrawText(txtholder_idx whichHolder)
 
 		// draw final string
 		SetTextColor(hdc, TextHolder::txtHolders[whichHolder].color_txt);
-		DrawText(hdc, currTxt.c_str(), -1, &TextHolder::txtHolders[whichHolder].txtRect, DT_LEFT);
+		DrawTextEx(hdc, const_cast<char *>(currTxt.c_str()), -1, &TextHolder::txtHolders[whichHolder].txtRect, TextHolder::txtHolders[whichHolder].format, NULL);
 	}
 
 	ReleaseDC(hwnd, hdc); // Release device context
@@ -541,11 +581,12 @@ void ClearScreen(txtholder_idx whichHolder)
 			// reset buffer
 			TextHolder::txtHolders[t].txtBuffer.clear();
 			TextHolder::txtHolders[t].txtBuffer.push_back("\n\n");
+			TextHolder::txtHolders[t].txtBuffer.push_back("");
 
 			// refresh the area
 			FillRect(hdc, &TextHolder::txtHolders[t].txtRect, color_bk_rects);
-			DrawText(hdc, TEXT(TextHolder::txtHolders[t].
-				txtTitle.c_str()), -1, &TextHolder::txtHolders[t].txtRect, DT_CENTER);
+			DrawTextEx(hdc, const_cast<char *>(TextHolder::txtHolders[t].
+				txtTitle.c_str()), -1, &TextHolder::txtHolders[t].txtRect, DT_CENTER, NULL);
 		}
 	}
 	else
@@ -553,11 +594,12 @@ void ClearScreen(txtholder_idx whichHolder)
 		// reset buffer
 		TextHolder::txtHolders[whichHolder].txtBuffer.clear();
 		TextHolder::txtHolders[whichHolder].txtBuffer.push_back("\n\n");
+		TextHolder::txtHolders[whichHolder].txtBuffer.push_back("");
 
 		// refresh the area
 		FillRect(hdc, &TextHolder::txtHolders[whichHolder].txtRect, color_bk_rects);
-		DrawText(hdc, TEXT(TextHolder::txtHolders[whichHolder].
-			txtTitle.c_str()), -1, &TextHolder::txtHolders[whichHolder].txtRect, DT_CENTER);
+		DrawTextEx(hdc, const_cast<char *>(TextHolder::txtHolders[whichHolder].
+			txtTitle.c_str()), -1, &TextHolder::txtHolders[whichHolder].txtRect, DT_CENTER, NULL);
 	}
 
 	ReleaseDC(hwnd, hdc); // Release device context

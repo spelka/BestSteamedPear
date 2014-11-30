@@ -11,7 +11,7 @@ struct TextHolder;
 
 enum txtholder_idx
 {
-	CHAT_LOG, CURRENT_MSG, ALL
+	CHAT_LOG_RX, CHAT_LOG_TX, CURRENT_MSG, ALL
 };
 
 int WINAPI WinMain(
