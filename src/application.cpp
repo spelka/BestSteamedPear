@@ -6,6 +6,7 @@
 #include "crc.h"
 #include "resource.h"
 #include "protocol.h"
+#include "transmit.h"
 
 using namespace std;
 
@@ -308,6 +309,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
             ++newLines;
 
 			ClearScreen(CURRENT_MSG);
+
+			for (char c : currMsg)
+			{
+				GetWConn().buffer_send.push_back(c);
+			}
+			Transmit();
 			break;
 
 		case VK_ESCAPE:

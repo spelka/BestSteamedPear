@@ -46,7 +46,7 @@ using namespace std;
 -- NOTES:
 -- This begins the thread for sending data.
 ----------------------------------------------------------------------------------------------------------------------*/
-DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
+void Transmit()
 {
 	char response = SendChar(ENQ, GetWConn().TO2);
 
@@ -58,8 +58,6 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 	{
 		ResetState();
 	}
-
-	return NULL;
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -188,7 +186,7 @@ char SendPacket()
 -- This is the trasmit state, it will send data if the buffer_send is not empty 
 -- continue to send data until MAX_MISS or MAX_SEND has been reached.
 ----------------------------------------------------------------------------------------------------------------------*/
-void Transmit()
+void TransmitMode()
 {
 	int missCount = 0;
 
