@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <vector>
 #include <sstream>
+#include <stdlib.h>
+#include <time.h>
 #include "crc.h"
 #include "resource.h"
 #include "protocol.h"
@@ -117,6 +119,7 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	GResources::color_txt = RGB(242, 242, 242);
 	GResources::color_txt_bk = RGB(38, 38, 38);
 
+	// set window class variables
 	Wcl.cbSize = sizeof(WNDCLASSEX);
 	Wcl.style = CS_HREDRAW | CS_VREDRAW;
 	Wcl.hIcon = LoadIcon(NULL, IDI_APPLICATION); // large icon 
@@ -135,6 +138,7 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	if (!RegisterClassEx(&Wcl))
 		return 0;
 
+	// create window
 	hwnd = CreateWindow(Name, Name, WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		NULL, NULL, hInst, NULL);
@@ -162,9 +166,7 @@ int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	// initialize the text buffer
 	ClearScreen(ALL);
 
-	// initialize comm port settings
-	GetWConn().lpszCommName = "(UNSET)";
-
+	// run the app
 	ShowWindow(hwnd, nCmdShow);
 	UpdateWindow(hwnd);
 
@@ -226,19 +228,32 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 		.append("\n> Help - Brings up this menu!")
 		.append("\n> Exit to CMD - Closes the connection and the window, while opening a command window.")
 		;
+
+	WConn& wConn = GetWConn();
     
     static int newLines = 1;
-
 	string currMsg;
 
 	switch (Message)
 	{
+	case WM_CREATE:
+		srand(time(NULL));
+
+		wConn = GetWConn();
+		wConn.lpszCommName = "(UNSET)";
+
+		EnableMenuItem(mymenu, ID_CONNECT, MF_DISABLED);
+		DrawMenuBar(hwnd);
+		break;
+
 	case WM_COMMAND:			// menu items
 
 		switch (LOWORD(wParam))
 		{
 		case ID_CONFIGURE:
 			Configure("COM1");
+			EnableMenuItem(mymenu, ID_CONNECT, MF_ENABLED);
+			DrawMenuBar(hwnd);
 			break;
 
 		case ID_CONNECT:

@@ -20,9 +20,11 @@
 ----------------------------------------------------------------------------------------------------------------------*/
 
 #include "protocol.h"
+
 #include "receive.h"
 #include "transmit.h"
 #include "application.h"
+#include <stdlib.h>
 
 using namespace std;
 
@@ -116,6 +118,12 @@ bool Configure(LPCSTR lpszCommName)
 	if (!CommConfigDialog(wConn.lpszCommName, hwnd, &cc))
 		return false;
 	SetCommConfig(wConn.hComm, &cc, cc.dwSize);
+
+	wConn.TO3 = 1200 * 8 / cc.dcb.BaudRate;
+	wConn.TO1 = wConn.TO3 * MAX_MISS;
+	wConn.TO2 = 5 * 8 / cc.dcb.BaudRate;
+	wConn.TO4 = (rand() % 4 + 1) * 8 / cc.dcb.BaudRate;
+
 	return true;
 }
 
