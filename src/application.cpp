@@ -94,9 +94,6 @@ vector<TextHolder> TextHolder::txtHolders; // the container for all of the text 
 
 const char Name[] = "Best Steamed Pear";
 
-HANDLE hTransmitThread;				// the transmitting thread handle
-DWORD idTransmitThread;				// the transmitting thread handle identification
-
 int WINAPI WinMain(HINSTANCE hInst    //_In_  HINSTANCE hInstance,
 	, HINSTANCE hprevInstance         //_In_  HINSTANCE hPrevInstance,
 	, LPSTR lspszCmdParam             //_In_  LPSTR lpCmdLine,
@@ -335,13 +332,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 				GetWConn().buffer_send.push_back(c);
 			}
 
-			if (!(hTransmitThread = CreateThread(NULL, 0, TransmitThread, (LPVOID)NULL, 0, &idTransmitThread)))
-			{
-				MessageBox(hwnd, "Error creating comm port transmitting thread", "", MB_OK);
-				return false;
-			}
-			CloseHandle(hTransmitThread);
-			
+			PrintToScreen(CHAT_LOG_TX, to_string(GetWConn().buffer_send.size()));
 			break;
 
         case 0x0A:

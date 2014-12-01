@@ -44,44 +44,9 @@ void SyncTracker::FlagForReset()
 //Comment
 DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
 {
-    deque<char>& netBuf = GetWConn().buffer_receive;
+	FillRxBuffer();
 
-    while( true )
-    {
-        if( ReadChar(MAXDWORD) == ENQ )//wait for ENQ
-        {
-            SendChar( ACK, 0 );
-            bool receivedETB = false;
-            do
-            {
-                FillRxBuffer();
-                if( ValidateData() )
-                {
-                    receivedETB = (netBuf.front() == ETB);
-                    //if( GetWConn().rvi )
-                    //{
-                    //    SendChar( RVI, 0 );
-                    //    //Go to transmitMode
-                    //}
-                    //else
-                    //{
-                    SendChar( ACK, 0 );
-                    //}
-                    TrimPacket();
-                    while( netBuf.size() != 0 ) //clear buffer
-                    {
-						PrintToScreen(CHAT_LOG_RX, netBuf.front());
-                        netBuf.pop_front();
-                    }
-                }
-                else
-                {
-                    SendChar( NAK, 0 );
-                }
-            }
-            while( receivedETB );
-        }
-    }
+	return NULL;
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -155,6 +120,8 @@ bool FillRxBuffer()
 	DWORD dwRead = 0;
 	OVERLAPPED osRead = { 0 };
 
+	deque<char>& netBuf = GetWConn().buffer_receive;
+
 	//if the comm mask is successfully set to watch for receiving character events
 	if (!SetCommMask(GetWConn().hComm, EV_RXCHAR))
 	{
@@ -170,18 +137,24 @@ bool FillRxBuffer()
 
 	for (;;)
 	{
-		if (WaitCommEvent(GetWConn().hComm, &dwCommEvent, &osRead))
+		bool packetRead = false;
+
+		if (WaitCommEvent(GetWConn().hComm, &dwCommEvent, NULL))
 		{
 			do
 			{
 				if (ReadFile(GetWConn().hComm, &controlChar, 1, NULL, &osRead))
 				{
+					PrintToScreen(CHAT_LOG_RX, string("148) ") + controlChar);
+
 					//if the data in the buffer is a packet
 					if (controlChar == EOT || controlChar == ETB)
 					{
 						//check sync bits
 						if (ReadFile(GetWConn().hComm, &syncBit, 1, NULL, &osRead))
 						{
+							PrintToScreen(CHAT_LOG_RX, string("156) ") + controlChar);
+
 							//if the sync bit is OK
 							if (SyncTracker::CheckSync(syncBit))
 							{
@@ -189,13 +162,15 @@ bool FillRxBuffer()
 								GetWConn().buffer_receive.push_back(syncBit);
 
 								//if you successfully read the packet in
-								if (ReadFile(GetWConn().hComm, &dwRead, PACKET_SIZE - 1, NULL, &osRead))
+								if (ReadFile(GetWConn().hComm, &dwRead, PACKET_SIZE - 2, NULL, &osRead))
 								{
 									//push the characters into the receive buffer
 									for (unsigned int i = 1; i < PACKET_SIZE; i++)
 									{
 										GetWConn().buffer_receive.push_back(buffer[i]);
 									}
+
+									packetRead = true;
 								}
 							}
 						}
@@ -205,7 +180,10 @@ bool FillRxBuffer()
 							SyncTracker::FlagForReset();
 						}
 					}
-					
+					else if (controlChar == ENQ)
+					{
+						SendChar(ACK, 0);
+					}
 				}
 				else
 				{
@@ -213,6 +191,26 @@ bool FillRxBuffer()
 					break;
 				}
 			} while (dwRead);
+
+			if (packetRead)
+			{
+				if (ValidateData())
+				{
+					TrimPacket();
+					
+					while (!netBuf.empty()) //clear buffer
+					{
+						PrintToScreen(CHAT_LOG_RX, netBuf.front());
+						netBuf.pop_front();
+					}
+
+					SendChar(ACK, 0);
+				}
+				else
+				{
+					SendChar(NAK, 0);
+				}
+			}
 		}
 		else
 		{

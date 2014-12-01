@@ -16,15 +16,15 @@ const char ETB = 0x23;
 const char PAD = 0x54;
 */
 
-const char NUL = 'N';
-const char ETX = 0x03;
-const char EOT = 0x04;
+const char NUL = '_';
+const char ETX = 'T';
+const char EOT = 'O';
 const char ENQ = 'E';
 const char ACK = 'A';
-const char RVI = 0x17;
-const char NAK = 0x21;
-const char ETB = 0x23;
-const char PAD = 0x54;
+const char RVI = 'R';
+const char NAK = 'N';
+const char ETB = 'B';
+const char PAD = 'P';
 
 const unsigned PACKET_SIZE = 1024; //packet size in bytes
 const unsigned PACKET_DATA_SIZE = 1018; //packet size in bytes

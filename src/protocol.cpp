@@ -102,6 +102,9 @@ COMMCONFIG	cc;						// the communication config
 HANDLE hReceiveThread;				// the reading thread handle
 DWORD idReceiveThread;				// the reading thread handle identification
 
+HANDLE hTransmitThread;				// the transmitting thread handle
+DWORD idTransmitThread;				// the transmitting thread handle identification
+
 bool Configure(LPCSTR lpszCommName)
 {
 	WConn& wConn = GetWConn();
@@ -142,6 +145,12 @@ bool Connect()
 		return false;
 	}
 
+	if (!(hTransmitThread = CreateThread(NULL, 0, TransmitThread, (LPVOID)NULL, 0, &idTransmitThread)))
+	{
+		MessageBox(hwnd, "Error creating comm port transmitting thread", "", MB_OK);
+		return false;
+	}
+
 	wConn.isConnected = true;
 
 	return true;
@@ -150,5 +159,7 @@ bool Connect()
 bool Disconnect()
 {
 	GetWConn().isConnected = false;
-	return (CloseHandle(hReceiveThread) && CloseHandle(GetWConn().hComm));
+	GetWConn().buffer_send.clear();
+	GetWConn().buffer_receive.clear();
+	return (CloseHandle(hReceiveThread) && CloseHandle(hTransmitThread) && CloseHandle(GetWConn().hComm));
 }

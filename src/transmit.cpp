@@ -49,17 +49,26 @@ using namespace std;
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 {
-	SendChar(ENQ, GetWConn().TO2);
-
-	char response = ReadChar(GetWConn().TO2);
-
-	if (response != NUL)
+	for (;;)
 	{
-		Transmit();
-	}
-	else //Timed out
-	{
-		ResetState();
+		if (GetWConn().buffer_send.empty()) continue;
+
+		SendChar(ENQ, GetWConn().TO2);
+
+		char response = ReadChar(GetWConn().TO2);
+
+		//PrintToScreen(CHAT_LOG_RX, response);
+
+		PrintToScreen(CHAT_LOG_TX, GetWConn().buffer_send.size());
+
+		if (response != NUL)
+		{
+			Transmit();
+		}
+		else //Timed out
+		{
+			ResetState();
+		}
 	}
 
 	return NULL;
@@ -106,10 +115,10 @@ bool SendChar(char charToSend, unsigned toDuration)
 bool SendPacket()
 {
 	char response;
-	vector<char> packet;
+	deque<char> packet;
 	unsigned long crcResult;
 	char first, second, third, fourth;
-	vector<char> paddedPacket;
+	deque<char> paddedPacket;
 
 	OVERLAPPED osWrite = { 0 };
 
@@ -122,6 +131,8 @@ bool SendPacket()
 
 		packet.begin()
 		);
+
+	PrintToScreen(CHAT_LOG_RX, string("Packet size: ") + to_string(packet.size()));
 
 	packet.push_back(ETX);
 
@@ -177,19 +188,18 @@ bool SendPacket()
 ----------------------------------------------------------------------------------------------------------------------*/
 void Transmit()
 {
+	if (GetWConn().buffer_send.empty()) return;
+
 	int missCount = 0;
 
 	for (unsigned send = 0; send < MAX_SEND; ++send)
 	{
-		if (GetWConn().buffer_send.size() <= 0) return;
-
-		//Try again if receiver replies NULL or NAK
-		SendPacket();
 		char response = NUL;
-		while (response == NUL && missCount < MAX_MISS)
-		{
-			missCount++;
-			
+
+		do {
+
+			if (GetWConn().buffer_send.empty()) break;
+
 			SendPacket();
 
 			response = ReadChar(GetWConn().TO3);
@@ -197,19 +207,22 @@ void Transmit()
 			switch (response)
 			{
 			case ACK:
+				PrintToScreen(CHAT_LOG_TX, response);
+
 				GetWConn().buffer_send.erase(GetWConn().buffer_send.begin(),
 					GetWConn().buffer_send.begin() + PACKET_DATA_SIZE - 1);
 				GetWConn().synFlip = !GetWConn().synFlip;
 				break;
-			}
-		}
 
-		//If receiver replies with RVI
-		if (response == RVI)
-		{
-			GetWConn().canTransmit = !GetWConn().canTransmit;
-			break;
-		}
+			case RVI:
+				GetWConn().canTransmit = !GetWConn().canTransmit;
+				return;
+
+			default:
+				++missCount;
+			}
+
+		} while (response == NUL && missCount < MAX_MISS);
 	}
 
 	ResetState();
