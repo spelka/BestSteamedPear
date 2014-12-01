@@ -34,6 +34,7 @@ struct WConn
 		;
 
 	bool canTransmit;
+    bool rvi;
 
 	std::deque<char> buffer_receive;
 	std::deque<char> buffer_send;
