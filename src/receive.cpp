@@ -1,5 +1,6 @@
 #include <deque>
 #include "receive.h"
+#include "transmit.h"
 #include "protocol.h"
 #include "crc.h"
 
@@ -48,34 +49,36 @@ DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
     {
         if( ReadChar(MAXDWORD) == ENQ )//wait for ENQ
         {
-            //Send ACK
+            SendChar( ACK, 0 );
             bool receivedETB = false;
-            while( receivedETB )
+            do
             {
                 FillRxBuffer();
                 if( validateData() )
                 {
-                    receivedETB = netBuf.front() == ETB;
+                    receivedETB = (netBuf.front() == ETB);
                     if( GetWConn().rvi )
                     {
-                        //Send RVI
+                        SendChar( RVI, 0 );
+                        //Go to transmitMode
                     }
                     else
                     {
-                        //Send ACK
+                        SendChar( ACK, 0 );
                     }
                     TrimPacket();
-                    while( netBuf.size() ) //clear buffer
+                    while( netBuf.size() != 0 ) //clear buffer
                     {
                         printBuf.push_back( netBuf.front() );
-
+                        netBuf.pop_front();
                     }
                 }
                 else
                 {
-                    //Send NAK
+                    SendChar( NAK, 0 );
                 }
             }
+            while( receivedETB );
         }
     }
 }
