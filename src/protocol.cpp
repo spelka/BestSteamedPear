@@ -21,6 +21,8 @@
 
 #include "protocol.h"
 #include "receive.h"
+#include "transmit.h"
+#include "application.h"
 
 using namespace std;
 
@@ -84,7 +86,7 @@ VOID CALLBACK Timer::TimerCallBack(
 
 WConn& GetWConn()
 {
-	static WConn wConn;
+	static WConn wConn = { 0 };
 	return wConn;
 }
 
@@ -96,12 +98,56 @@ PrintBuffer& GetPrintBuffer()
     return pBuff;
 }
 
-bool Disconnect()
+//////
+
+COMMCONFIG	cc;						// the communication config
+
+HANDLE hReadingThread;				// the reading thread handle
+DWORD idReadingThread;				// the reading thread handle identification
+
+bool Configure(LPCSTR lpszCommName)
 {
-	return false;
+	WConn& wConn = GetWConn();
+	wConn.lpszCommName = lpszCommName;
+
+	cc.dwSize = sizeof(COMMCONFIG);
+	cc.wVersion = 0x100;
+	GetCommConfig(wConn.hComm, &cc, &cc.dwSize);
+	if (!CommConfigDialog(wConn.lpszCommName, hwnd, &cc))
+		return false;
+	SetCommConfig(wConn.hComm, &cc, cc.dwSize);
+	return true;
 }
 
 bool Connect()
 {
-	return false;
+	WConn& wConn = GetWConn();
+
+	wConn.isConnected = false;
+
+	if ((wConn.hComm = CreateFile(wConn.lpszCommName, GENERIC_READ | GENERIC_WRITE, 0,
+		NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL))
+		== INVALID_HANDLE_VALUE)
+	{
+		MessageBox(hwnd, std::string("Error opening COM port: ").append(wConn.lpszCommName).c_str(), "", MB_OK);
+		return false;
+	}
+
+	/*
+	if (!(hReadingThread = CreateThread(NULL, 0, ReceivingThread, (LPVOID)NULL, 0, &idReadingThread)))
+	{
+		MessageBox(hwnd, "Error creating comm port reading thread", "", MB_OK);
+		return false;
+	}
+	*/
+
+	wConn.isConnected = true;
+
+	return true;
+}
+
+bool Disconnect()
+{
+	GetWConn().isConnected = false;
+	return (CloseHandle(hReadingThread) && CloseHandle(GetWConn().hComm));
 }

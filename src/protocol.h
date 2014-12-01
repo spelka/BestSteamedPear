@@ -40,6 +40,8 @@ struct WConn
 
 	bool synFlip;
 	bool isConnected;
+
+	LPCSTR lpszCommName;
 };
 
 //////
@@ -70,7 +72,8 @@ private:
 WConn& GetWConn();
 PrintBuffer& GetPrintBuffer();
 
-bool Disconnect();
+bool Configure(LPCSTR lpszCommName);
 bool Connect();
+bool Disconnect();
 
 #endif // PROTOCOL_H
