@@ -9,7 +9,7 @@ bool receivingMode = false;
 COMMTIMEOUTS timeouts = { 0, 0, 0, 0, 0 };
 
 bool SyncTracker::firstSync = true;
-bool SyncTracker::previousSync = true;
+char SyncTracker::previousSync = true;
 
 bool SyncTracker::CheckSync(char syncbit)
 {
@@ -31,6 +31,7 @@ bool SyncTracker::CheckSync(char syncbit)
 		firstSync = false;
 		previousSync = syncbit;
 	}
+    return true;
 }
 
 
@@ -54,18 +55,18 @@ DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
             do
             {
                 FillRxBuffer();
-                if( validateData() )
+                if( ValidateData() )
                 {
-                    receivedETB = (netBuf.front() == ETB);
-                    if( GetWConn().rvi )
-                    {
-                        SendChar( RVI, 0 );
-                        //Go to transmitMode
-                    }
-                    else
-                    {
-                        SendChar( ACK, 0 );
-                    }
+                    //receivedETB = (netBuf.front() == ETB);
+                    //if( GetWConn().rvi )
+                    //{
+                    //    SendChar( RVI, 0 );
+                    //    //Go to transmitMode
+                    //}
+                    //else
+                    //{
+                    SendChar( ACK, 0 );
+                    //}
                     TrimPacket();
                     while( netBuf.size() != 0 ) //clear buffer
                     {
@@ -226,7 +227,7 @@ bool FillRxBuffer()
 // Created On: November 29, 2014 by Sebastian Pelka
 //
 //--------------------------------------------------------------------------------------------------
-bool validateData()
+bool ValidateData()
 {
     WConn w = GetWConn();
     unsigned long crcResult = crc( w.buffer_receive.begin() + 2, w.buffer_receive.begin() + 3 + PACKET_SIZE );
@@ -234,7 +235,7 @@ bool validateData()
     deque<char>::iterator it = w.buffer_receive.begin() + 3 + PACKET_SIZE;
     for( int i = 0; i < 4; ++i )
     {
-        if( (char)crcResult != *it );
+        if( (char)crcResult != *it )
             return false;
     }
     return true;
