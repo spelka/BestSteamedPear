@@ -17,7 +17,7 @@ class SyncTracker
 
 char ReadChar(DWORD timeout);
 bool FillRxBuffer();
-bool CheckForETX();
+void TrimPacket();
 void ClearPrintBuffer();
 
 #endif // LISTEN_H

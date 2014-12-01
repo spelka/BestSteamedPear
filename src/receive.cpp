@@ -38,6 +38,48 @@ void SyncTracker::FlagForReset()
 	firstSync = true;
 }
 
+//Comment
+DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
+{
+    deque<char>& printBuf = GetPrintBuffer().received;
+    deque<char>& netBuf = GetWConn().buffer_receive;
+
+    while( true )
+    {
+        if( ReadChar(MAXDWORD) == ENQ )//wait for ENQ
+        {
+            //Send ACK
+            bool receivedETB = false;
+            while( receivedETB )
+            {
+                FillRxBuffer();
+                if( validateData() )
+                {
+                    receivedETB = netBuf.front() == ETB;
+                    if( GetWConn().rvi )
+                    {
+                        //Send RVI
+                    }
+                    else
+                    {
+                        //Send ACK
+                    }
+                    TrimPacket();
+                    while( netBuf.size() ) //clear buffer
+                    {
+                        printBuf.push_back( netBuf.front() );
+
+                    }
+                }
+                else
+                {
+                    //Send NAK
+                }
+            }
+        }
+    }
+}
+
 /*------------------------------------------------------------------------------------------------------------------
 -- FUNCTION: 	ReadChar
 --
@@ -108,6 +150,13 @@ bool FillRxBuffer()
 	if (!SetCommMask(GetWConn().hComm, EV_RXCHAR))
 	{
 		return false;
+	}
+    
+	timeouts.ReadIntervalTimeout = GetWConn().TO1;
+	// set timeouts
+	if (!SetCommTimeouts(GetWConn().hComm, &timeouts))
+	{
+		// Error setting time-outs.
 	}
 
 	for (;;)
@@ -209,27 +258,24 @@ bool validateData()
 -- validated data to be printed to the screen so far.
 ----------------------------------------------------------------------------------------------------------------------*/
 
-bool CheckForETX()
+void TrimPacket()
 {
-	bool ETXfound = false;
-	deque<char> packet; // some dummy variables to use while we figure out where to put the global
-	deque<char>::iterator packetIterator = GetPrintBuffer().received.begin();
-	deque<char> temp;
+    deque<char> netBuf = GetWConn().buffer_receive;
+    netBuf.pop_front();
+    netBuf.pop_front();
+
+	deque<char>::iterator packetIterator = netBuf.begin();
 
 	for (unsigned int i = 0; i < 1018; i++)
 	{
 		if ((*packetIterator) == ETX)
 		{
-			ETXfound = true;
-			break;
-		}
-		else
-		{
-			temp.push_back(*packetIterator);
+            break;
 		}
 		packetIterator++;
 	}
-	return ETXfound;
+    netBuf.erase(packetIterator, netBuf.end());
+
 
 }
 
