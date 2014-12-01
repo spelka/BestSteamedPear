@@ -3,6 +3,7 @@
 #include "transmit.h"
 #include "protocol.h"
 #include "crc.h"
+#include "application.h"
 
 using namespace std;
 bool receivingMode = false;
@@ -43,7 +44,6 @@ void SyncTracker::FlagForReset()
 //Comment
 DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
 {
-    deque<char>& printBuf = GetPrintBuffer().received;
     deque<char>& netBuf = GetWConn().buffer_receive;
 
     while( true )
@@ -57,7 +57,7 @@ DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
                 FillRxBuffer();
                 if( ValidateData() )
                 {
-                    //receivedETB = (netBuf.front() == ETB);
+                    receivedETB = (netBuf.front() == ETB);
                     //if( GetWConn().rvi )
                     //{
                     //    SendChar( RVI, 0 );
@@ -70,7 +70,7 @@ DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
                     TrimPacket();
                     while( netBuf.size() != 0 ) //clear buffer
                     {
-                        printBuf.push_back( netBuf.front() );
+						PrintToScreen(CHAT_LOG_RX, netBuf.front());
                         netBuf.pop_front();
                     }
                 }
@@ -105,6 +105,8 @@ DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
 ----------------------------------------------------------------------------------------------------------------------*/
 char ReadChar(DWORD timeout)
 {
+	OVERLAPPED osRead = { 0 };
+
 	timeouts.ReadIntervalTimeout = timeout;
 	char received = NUL;
 	// set timeouts
@@ -115,7 +117,9 @@ char ReadChar(DWORD timeout)
 
 	//read in character from comm port
 	//if you fail to read in a file, return NUL
-	ReadFile(GetWConn().hComm, &received, 1, NULL, NULL);
+	ReadFile(GetWConn().hComm, &received, 1, NULL, &osRead);
+
+	if (received != NUL) PrintToScreen(CHAT_LOG_RX, received);
 	
 	return received;
 }
@@ -149,6 +153,7 @@ bool FillRxBuffer()
 	char syncBit;
 	DWORD dwCommEvent;
 	DWORD dwRead = 0;
+	OVERLAPPED osRead = { 0 };
 
 	//if the comm mask is successfully set to watch for receiving character events
 	if (!SetCommMask(GetWConn().hComm, EV_RXCHAR))
@@ -165,29 +170,31 @@ bool FillRxBuffer()
 
 	for (;;)
 	{
-		if (WaitCommEvent(GetWConn().hComm, &dwCommEvent, NULL))
+		if (WaitCommEvent(GetWConn().hComm, &dwCommEvent, &osRead))
 		{
 			do
 			{
-				if (ReadFile(GetWConn().hComm, &controlChar, 1, NULL, NULL))
+				if (ReadFile(GetWConn().hComm, &controlChar, 1, NULL, &osRead))
 				{
 					//if the data in the buffer is a packet
 					if (controlChar == EOT || controlChar == ETB)
 					{
-
 						//check sync bits
-						if (ReadFile(GetWConn().hComm, &syncBit, 1, NULL, NULL))
+						if (ReadFile(GetWConn().hComm, &syncBit, 1, NULL, &osRead))
 						{
 							//if the sync bit is OK
 							if (SyncTracker::CheckSync(syncBit))
 							{
+								GetWConn().buffer_receive.push_back(controlChar);
+								GetWConn().buffer_receive.push_back(syncBit);
+
 								//if you successfully read the packet in
-								if (ReadFile(GetWConn().hComm, &dwRead, PACKET_SIZE - 1, NULL, NULL))
+								if (ReadFile(GetWConn().hComm, &dwRead, PACKET_SIZE - 1, NULL, &osRead))
 								{
 									//push the characters into the receive buffer
 									for (unsigned int i = 1; i < PACKET_SIZE; i++)
 									{
-										(GetWConn().buffer_receive).push_back(buffer[i]);
+										GetWConn().buffer_receive.push_back(buffer[i]);
 									}
 								}
 							}
@@ -230,6 +237,9 @@ bool FillRxBuffer()
 bool ValidateData()
 {
     WConn w = GetWConn();
+
+	if (w.buffer_receive.empty()) return false;
+
     unsigned long crcResult = crc( w.buffer_receive.begin() + 2, w.buffer_receive.begin() + 3 + PACKET_SIZE );
 
     deque<char>::iterator it = w.buffer_receive.begin() + 3 + PACKET_SIZE;
@@ -282,30 +292,3 @@ void TrimPacket()
 
 
 }
-
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION: 	ClearPrintBuffer()
---
--- DATE: 		November 29, 2014
---
--- REVISIONS: 	NONE
---
--- DESIGNER: 	Sebastian Pelka
---
--- PROGRAMMER: 	Sebastian Pelka
---
--- INTERFACE: 	void ClearPrintBuffer()
---
--- NOTES:
--- Clears the received print buffer. This function is intended to be called after the contents of the print buffer
--- are painted to the screen.
-----------------------------------------------------------------------------------------------------------------------*/
-void ClearPrintBuffer()
-{
-	if (!GetPrintBuffer().received.empty())
-	{
-		GetPrintBuffer().received.clear();
-	}
-}
-
-

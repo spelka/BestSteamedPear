@@ -237,6 +237,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
     static int newLines = 1;
 	string currMsg;
 
+	OVERLAPPED osWrite = { 0 };
+
 	switch (Message)
 	{
 	case WM_CREATE:
@@ -317,14 +319,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 		switch (wParam)
 		{
 		case VK_RETURN:
+			//WriteFile(wConn.hComm, ":", 1, NULL, &osWrite);
+			
 			currMsg = TextHolder::txtHolders[CURRENT_MSG].txtBuffer.back();
 
 			if (currMsg.empty()) break;
 
 			PrintToScreen(CHAT_LOG_TX, currMsg);
-            for( ; newLines > 0; --newLines )
-			    PrintToScreen(CHAT_LOG_RX, "");
-            ++newLines;
+			PrintToScreen(CHAT_LOG_RX, "");
 
 			ClearScreen(CURRENT_MSG);
 
@@ -339,6 +341,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 				return false;
 			}
 			CloseHandle(hTransmitThread);
+			
 			break;
 
         case 0x0A:

@@ -184,7 +184,6 @@ crc(deque<char>::iterator& begin, deque<char>::iterator& end)
     unsigned char  data;
     deque<char>::iterator byte = begin;
 
-
     /*
      * Divide the message by the polynomial, a byte at a time.
      */

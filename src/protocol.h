@@ -4,11 +4,23 @@
 #include <windows.h>
 #include <deque>
 
+/*
 const char NUL = 0x00;
 const char ETX = 0x03;
 const char EOT = 0x04;
 const char ENQ = 0x05;
 const char ACK = 0x06;
+const char RVI = 0x17;
+const char NAK = 0x21;
+const char ETB = 0x23;
+const char PAD = 0x54;
+*/
+
+const char NUL = 'N';
+const char ETX = 0x03;
+const char EOT = 0x04;
+const char ENQ = 'E';
+const char ACK = 'A';
 const char RVI = 0x17;
 const char NAK = 0x21;
 const char ETB = 0x23;
@@ -25,6 +37,10 @@ const unsigned MAX_MISS = 3;
 struct WConn
 {
 	HANDLE hComm;
+	LPCSTR lpszCommName;
+
+	std::deque<char> buffer_receive;
+	std::deque<char> buffer_send;
 
 	unsigned
 		TO1,
@@ -33,25 +49,10 @@ struct WConn
 		TO4
 		;
 
+	bool isConnected;
 	bool canTransmit;
     bool rvi;
-
-	std::deque<char> buffer_receive;
-	std::deque<char> buffer_send;
-
 	bool synFlip;
-	bool isConnected;
-
-	LPCSTR lpszCommName;
-};
-
-//////
-
-//the contents of these buffers are meant to be printed to the screen
-struct PrintBuffer
-{
-    std::deque<char> received; //received is where we put messages that are received
-    std::deque<char> sent;     //sent is where we put the message that was sent
 };
 
 //////
@@ -71,7 +72,6 @@ private:
 //////
 
 WConn& GetWConn();
-PrintBuffer& GetPrintBuffer();
 
 bool Configure(LPCSTR lpszCommName);
 bool Connect();

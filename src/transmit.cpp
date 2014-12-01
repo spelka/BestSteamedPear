@@ -24,6 +24,7 @@
 #include "transmit.h"
 #include "protocol.h"
 #include "receive.h"
+#include "application.h"
 #include "crc.h"
 
 #include <vector>
@@ -48,7 +49,9 @@ using namespace std;
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 {
-	char response = SendChar(ENQ, GetWConn().TO2);
+	SendChar(ENQ, GetWConn().TO2);
+
+	char response = ReadChar(GetWConn().TO2);
 
 	if (response != NUL)
 	{
@@ -76,14 +79,13 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 -- NOTES:
 -- This function is used by different parts of the program to send characters(mostly control characters)
 ----------------------------------------------------------------------------------------------------------------------*/
-char SendChar(char charToSend, unsigned toDuration)
+bool SendChar(char charToSend, unsigned toDuration)
 {
-	if (!WriteFile(GetWConn().hComm, &charToSend, 1, NULL, NULL))
-	{
-		return NUL;
-	}
+	OVERLAPPED osWrite = { 0 };
 
-	return ReadChar(toDuration);
+	PrintToScreen(CHAT_LOG_TX, charToSend);
+
+	return WriteFile(GetWConn().hComm, &charToSend, 1, NULL, &osWrite);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -101,13 +103,15 @@ char SendChar(char charToSend, unsigned toDuration)
 -- This is used specifically by Tramsit() to send packets of data.
 -- Copies the vector, appends appropiate padding ,contorl characters, crc and writes to comm port.
 ----------------------------------------------------------------------------------------------------------------------*/
-char SendPacket()
+bool SendPacket()
 {
 	char response;
 	vector<char> packet;
 	unsigned long crcResult;
 	char first, second, third, fourth;
 	vector<char> paddedPacket;
+
+	OVERLAPPED osWrite = { 0 };
 
 	copy(
 		GetWConn().buffer_send.begin(),
@@ -153,24 +157,7 @@ char SendPacket()
 	paddedPacket.push_back((int)GetWConn().synFlip);
 	paddedPacket.insert(paddedPacket.begin(), packet.begin(), packet.end());
 
-	//Sends to port, checks if succesful
-	if (!WriteFile(GetWConn().hComm, &packet, PACKET_DATA_SIZE, NULL, NULL))
-	{
-		return NUL;
-	}
-
-	response = ReadChar(GetWConn().TO3);
-
-	switch (response)
-	{
-	case ACK:
-		GetWConn().buffer_send.erase(GetWConn().buffer_send.begin(),
-			GetWConn().buffer_send.begin() + PACKET_DATA_SIZE - 1);
-		GetWConn().synFlip = !GetWConn().synFlip;
-		break;
-	}
-
-	return response;
+	return WriteFile(GetWConn().hComm, &paddedPacket, PACKET_DATA_SIZE, NULL, &osWrite);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -197,11 +184,24 @@ void Transmit()
 		if (GetWConn().buffer_send.size() <= 0) return;
 
 		//Try again if receiver replies NULL or NAK
-		char response = SendPacket();
+		SendPacket();
+		char response = NUL;
 		while (response == NUL && missCount < MAX_MISS)
 		{
 			missCount++;
-			char response = SendPacket();
+			
+			SendPacket();
+
+			response = ReadChar(GetWConn().TO3);
+
+			switch (response)
+			{
+			case ACK:
+				GetWConn().buffer_send.erase(GetWConn().buffer_send.begin(),
+					GetWConn().buffer_send.begin() + PACKET_DATA_SIZE - 1);
+				GetWConn().synFlip = !GetWConn().synFlip;
+				break;
+			}
 		}
 
 		//If receiver replies with RVI

@@ -20,6 +20,5 @@ char ReadChar(DWORD timeout);
 bool FillRxBuffer();
 bool ValidateData();
 void TrimPacket();
-void ClearPrintBuffer();
 
 #endif // LISTEN_H

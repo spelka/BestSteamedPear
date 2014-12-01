@@ -97,14 +97,6 @@ WConn& GetWConn()
 
 //////
 
-PrintBuffer& GetPrintBuffer()
-{
-    static PrintBuffer pBuff;
-    return pBuff;
-}
-
-//////
-
 COMMCONFIG	cc;						// the communication config
 
 HANDLE hReceiveThread;				// the reading thread handle
