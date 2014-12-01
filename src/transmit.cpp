@@ -59,7 +59,7 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 
 		//PrintToScreen(CHAT_LOG_RX, response);
 
-		PrintToScreen(CHAT_LOG_TX, GetWConn().buffer_send.size());
+		//PrintToScreen(CHAT_LOG_TX, GetWConn().buffer_send.size());
 
 		if (response != NUL)
 		{
@@ -70,6 +70,8 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 			ResetState();
 		}
 	}
+
+	GetWConn().buffer_send.clear();
 
 	return NULL;
 }
@@ -132,7 +134,7 @@ bool SendPacket()
 		packet.begin()
 		);
 
-	PrintToScreen(CHAT_LOG_RX, string("Packet size: ") + to_string(packet.size()));
+	PrintToScreen(CHAT_LOG_TX, string("Packet size: ") + to_string(packet.size()));
 
 	packet.push_back(ETX);
 

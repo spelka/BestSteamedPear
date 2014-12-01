@@ -159,7 +159,5 @@ bool Connect()
 bool Disconnect()
 {
 	GetWConn().isConnected = false;
-	GetWConn().buffer_send.clear();
-	GetWConn().buffer_receive.clear();
 	return (CloseHandle(hReceiveThread) && CloseHandle(hTransmitThread) && CloseHandle(GetWConn().hComm));
 }

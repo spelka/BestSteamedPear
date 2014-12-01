@@ -46,6 +46,8 @@ DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
 {
 	FillRxBuffer();
 
+	GetWConn().buffer_receive.clear();
+
 	return NULL;
 }
 

@@ -16,7 +16,7 @@ const char ETB = 0x23;
 const char PAD = 0x54;
 */
 
-const char NUL = '_';
+const char NUL = 'U';
 const char ETX = 'T';
 const char EOT = 'O';
 const char ENQ = 'E';
