@@ -124,17 +124,15 @@ bool SendPacket()
 
 	OVERLAPPED osWrite = { 0 };
 
-	copy(
+	packet.insert(
+		packet.end(),
+
 		GetWConn().buffer_send.begin(),
 
-		GetWConn().buffer_send.size() >= PACKET_DATA_SIZE
-		? GetWConn().buffer_send.begin() + PACKET_DATA_SIZE - 1
-		: GetWConn().buffer_send.begin() + GetWConn().buffer_send.size() - 1,
-
-		packet.begin()
+		/*if*/     GetWConn().buffer_send.size() >= PACKET_DATA_SIZE
+		/*true*/   ? GetWConn().buffer_send.begin() + PACKET_DATA_SIZE - 1
+		/*false*/  : GetWConn().buffer_send.begin() + GetWConn().buffer_send.size() - 1
 		);
-
-	PrintToScreen(CHAT_LOG_TX, string("Packet size: ") + to_string(packet.size()));
 
 	packet.push_back(ETX);
 
@@ -169,6 +167,15 @@ bool SendPacket()
 	}
 	paddedPacket.push_back((int)GetWConn().synFlip);
 	paddedPacket.insert(paddedPacket.begin(), packet.begin(), packet.end());
+
+	PrintToScreen(CHAT_LOG_TX, string("\nPacket:"));
+	unsigned wrap = 0;
+	for (char c : paddedPacket)
+	{
+		if (++wrap % 80 == 0) PrintToScreen(CHAT_LOG_TX, '\n');
+		PrintToScreen(CHAT_LOG_TX, c);
+	}
+	PrintToScreen(CHAT_LOG_TX, "");
 
 	return WriteFile(GetWConn().hComm, &paddedPacket, PACKET_DATA_SIZE, NULL, &osWrite);
 }

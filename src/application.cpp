@@ -277,7 +277,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 				Disconnect();
 			}
 			// refresh the menu with the new information
-			if (GetWConn().isConnected)	mii_connect.dwTypeData = "Disconnect";
+			if (GetWConn().isConnected)		mii_connect.dwTypeData = "Disconnect";
 			else							mii_connect.dwTypeData = "Connect";
 			SetMenuItemInfo(mymenu, ID_CONNECT, FALSE, &mii_connect);
 			DrawMenuBar(hwnd);
