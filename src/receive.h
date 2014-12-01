@@ -12,11 +12,12 @@ class SyncTracker
 		static void FlagForReset();
 	private:
 		static bool firstSync;
-		static bool previousSync;
+		static char previousSync;
 };
 
 char ReadChar(DWORD timeout);
 bool FillRxBuffer();
+bool ValidateData();
 void TrimPacket();
 void ClearPrintBuffer();
 

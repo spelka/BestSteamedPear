@@ -237,7 +237,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 	switch (Message)
 	{
 	case WM_CREATE:
-		srand(time(NULL));
+		srand((unsigned)time(NULL));
 
 		wConn = GetWConn();
 		wConn.lpszCommName = "(UNSET)";
@@ -380,6 +380,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 	default:
 		return DefWindowProc(hwnd, Message, wParam, lParam);
 	}
+
+	return 0;
 }
 
 /*------------------------------------------------------------------------------------------------------------------
