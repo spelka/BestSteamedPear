@@ -116,7 +116,6 @@ bool SendChar(char charToSend, unsigned toDuration)
 ----------------------------------------------------------------------------------------------------------------------*/
 bool SendPacket()
 {
-	char response;
 	deque<char> packet;
 	unsigned long crcResult;
 	char first, second, third, fourth;
@@ -129,8 +128,8 @@ bool SendPacket()
 		GetWConn().buffer_send.begin(),
 
 		/*if*/     GetWConn().buffer_send.size() >= PACKET_DATA_SIZE
-		/*true*/   ? GetWConn().buffer_send.begin() + PACKET_DATA_SIZE - 1
-		/*false*/  : GetWConn().buffer_send.begin() + GetWConn().buffer_send.size() - 1
+		/*true*/   ? GetWConn().buffer_send.begin() + PACKET_DATA_SIZE
+		/*false*/  : GetWConn().buffer_send.begin() + GetWConn().buffer_send.size()
 		);
 
 	if (packet.size() < PACKET_DATA_SIZE) packet.push_back(ETX);
