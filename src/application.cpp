@@ -444,15 +444,15 @@ void PaintComponents()
 
 	// Set and draw titles
 	TextHolder::txtHolders[CHAT_LOG_RX].
-		txtTitle = std::string("[= Chat Log =]\n")
+		txtTitle = std::string("[> Chat Log <]\n")
 		.append(std::string((rc_chatlog.right - rc_chatlog.left) / GResources::textSizeX, breakline));
 
 	TextHolder::txtHolders[CHAT_LOG_TX].
-		txtTitle = std::string("[= Chat Log =]\n")
+		txtTitle = std::string("[> Chat Log <]\n")
 		.append(std::string((rc_chatlog.right - rc_chatlog.left) / GResources::textSizeX, breakline));
 
 	TextHolder::txtHolders[CURRENT_MSG].
-		txtTitle = std::string("[= Enter Message =]\n")
+		txtTitle = std::string("[> Enter Message <]\n")
 		.append(std::string((rc_currmsg.right - rc_currmsg.left) / GResources::textSizeX, breakline));
 
 	DrawText(hDC, TEXT(TextHolder::txtHolders[CHAT_LOG_RX].

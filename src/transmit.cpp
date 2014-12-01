@@ -120,7 +120,6 @@ bool SendPacket()
 	deque<char> packet;
 	unsigned long crcResult;
 	char first, second, third, fourth;
-	deque<char> paddedPacket;
 
 	OVERLAPPED osWrite = { 0 };
 
@@ -134,7 +133,7 @@ bool SendPacket()
 		/*false*/  : GetWConn().buffer_send.begin() + GetWConn().buffer_send.size() - 1
 		);
 
-	packet.push_back(ETX);
+	if (packet.size() < PACKET_DATA_SIZE) packet.push_back(ETX);
 
 	//Pads the word until packet data size
 	for (unsigned p = 0; p < PACKET_DATA_SIZE - packet.size(); ++p)
@@ -157,27 +156,26 @@ bool SendPacket()
 	packet.push_back(fourth);
 
 	//Appends the control characters needed for the word
+	packet.push_front((int)GetWConn().synFlip);
 	if (GetWConn().buffer_send.size() > PACKET_DATA_SIZE)
 	{
-		paddedPacket.push_back(ETB);
+		packet.push_front(ETB);
 	}
 	else
 	{
-		paddedPacket.push_back(EOT);
+		packet.push_front(EOT);
 	}
-	paddedPacket.push_back((int)GetWConn().synFlip);
-	paddedPacket.insert(paddedPacket.begin(), packet.begin(), packet.end());
 
 	PrintToScreen(CHAT_LOG_TX, string("\nPacket:"));
 	unsigned wrap = 0;
-	for (char c : paddedPacket)
+	for (char c : packet)
 	{
 		if (++wrap % 80 == 0) PrintToScreen(CHAT_LOG_TX, '\n');
 		PrintToScreen(CHAT_LOG_TX, c);
 	}
 	PrintToScreen(CHAT_LOG_TX, "");
 
-	return WriteFile(GetWConn().hComm, &paddedPacket, PACKET_DATA_SIZE, NULL, &osWrite);
+	return WriteFile(GetWConn().hComm, &packet, PACKET_DATA_SIZE, NULL, &osWrite);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
