@@ -3,12 +3,12 @@
 
 #include <windows.h>
 
-void Transmit();
+DWORD WINAPI TransmitThread(LPVOID lpvThreadParm);
 
 char SendChar(char charToSend, unsigned toDuration);
 char SendPacket();
 
-void TransmitMode();
+void Transmit();
 void ResetState();
 
 #endif // TRANSMIT_H

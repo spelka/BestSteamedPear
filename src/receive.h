@@ -15,6 +15,7 @@ class SyncTracker
 		static char previousSync;
 };
 
+DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm);
 char ReadChar(DWORD timeout);
 bool FillRxBuffer();
 bool ValidateData();

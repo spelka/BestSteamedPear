@@ -82,6 +82,9 @@ VOID CALLBACK Timer::TimerCallBack(
 	DWORD dwTime)     // current system time 
 {
 	timerCalledBack = true;
+
+
+	MessageBox(NULL, "", "TIMERCALLEDBACK", MB_OK);
 }
 
 //////
@@ -104,8 +107,8 @@ PrintBuffer& GetPrintBuffer()
 
 COMMCONFIG	cc;						// the communication config
 
-HANDLE hReadingThread;				// the reading thread handle
-DWORD idReadingThread;				// the reading thread handle identification
+HANDLE hReceiveThread;				// the reading thread handle
+DWORD idReceiveThread;				// the reading thread handle identification
 
 bool Configure(LPCSTR lpszCommName)
 {
@@ -119,10 +122,10 @@ bool Configure(LPCSTR lpszCommName)
 		return false;
 	SetCommConfig(wConn.hComm, &cc, cc.dwSize);
 
-	wConn.TO3 = 1200 * 8 / cc.dcb.BaudRate;
-	wConn.TO1 = wConn.TO3 * MAX_MISS;
-	wConn.TO2 = 5 * 8 / cc.dcb.BaudRate;
-	wConn.TO4 = (rand() % 4 + 1) * 8 / cc.dcb.BaudRate;
+	wConn.TO3 = 1200 * 8 / cc.dcb.BaudRate						* 1000;
+	wConn.TO1 = wConn.TO3 * MAX_MISS							* 1000;
+	wConn.TO2 = 5 * 8 / cc.dcb.BaudRate							* 1000;
+	wConn.TO4 = (rand() % 4 + 1) * 8 / cc.dcb.BaudRate			* 1000;
 
 	return true;
 }
@@ -141,13 +144,11 @@ bool Connect()
 		return false;
 	}
 
-	/*
-	if (!(hReadingThread = CreateThread(NULL, 0, ReceivingThread, (LPVOID)NULL, 0, &idReadingThread)))
+	if (!(hReceiveThread = CreateThread(NULL, 0, ReceiveThread, (LPVOID)NULL, 0, &idReceiveThread)))
 	{
 		MessageBox(hwnd, "Error creating comm port reading thread", "", MB_OK);
 		return false;
 	}
-	*/
 
 	wConn.isConnected = true;
 
@@ -157,5 +158,5 @@ bool Connect()
 bool Disconnect()
 {
 	GetWConn().isConnected = false;
-	return (CloseHandle(hReadingThread) && CloseHandle(GetWConn().hComm));
+	return (CloseHandle(hReceiveThread) && CloseHandle(GetWConn().hComm));
 }
