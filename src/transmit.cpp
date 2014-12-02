@@ -27,7 +27,6 @@
 #include "application.h"
 #include "crc.h"
 
-#include <vector>
 #include <algorithm>
 
 using namespace std;
@@ -78,6 +77,44 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 	return NULL;
 }
 
+void Packetize(std::string s)
+{
+	WConn& wConn = GetWConn();
+
+	while (!s.empty())
+	{
+		GrapefruitPacket gfp;
+		unsigned currDataSize = min(PACKET_DATA_SIZE, s.size());
+		unsigned long crcResult;
+
+		gfp.ctrl = s.size() > PACKET_DATA_SIZE ? ETB : EOT;
+		gfp.sync = wConn.synFlip;
+
+		for (unsigned p = 0; p < PACKET_DATA_SIZE; ++p)
+		{
+			gfp.data[p] = PAD;
+		}
+
+		for (unsigned d = 0; d < currDataSize; ++d)
+		{
+			gfp.data[d] = s[d];
+		}
+
+		s = s.substr(currDataSize);
+
+		if (currDataSize < PACKET_DATA_SIZE) gfp.data[currDataSize] = ETX;
+
+		crcResult = crc(gfp.data, PACKET_DATA_SIZE);
+
+		gfp.crc[0] = (char)(crcResult >> 24);
+		gfp.crc[1] = (char)(crcResult >> 16);
+		gfp.crc[2] = (char)(crcResult >> 8);
+		gfp.crc[3] = (char)(crcResult >> 0);
+
+		wConn.buffer_tx.emplace_back(gfp);
+	}
+}
+
 /*------------------------------------------------------------------------------------------------------------------
 -- FUNCTIONS:		SendChar
 --
@@ -119,65 +156,25 @@ bool SendChar(char charToSend)
 bool SendPacket()
 {
 	WConn &wConn = GetWConn();
-	deque<char> packet;
-	unsigned long crcResult;
-	char first, second, third, fourth;
+	
+	char packet[1024];
 
-	packet.insert(
-		packet.end(),
+	GrapefruitPacket& gfp = wConn.buffer_tx.front();
 
-		wConn.buffer_tx.begin(),
-
-		/*if*/     wConn.buffer_tx.size() >= PACKET_DATA_SIZE
-		/*true*/   ? wConn.buffer_tx.begin() + PACKET_DATA_SIZE
-		/*false*/  : wConn.buffer_tx.begin() + wConn.buffer_tx.size()
-		);
-
-	if (packet.size() < PACKET_DATA_SIZE) packet.push_back(ETX);
-
-	//Pads the word until packet data size
-	for (unsigned p = 0; p < PACKET_DATA_SIZE - packet.size(); ++p)
+	packet[0] = gfp.ctrl;
+	packet[1] = gfp.sync;
+	for (unsigned d = 0; d < PACKET_DATA_SIZE; ++d)
 	{
-		packet.push_back(PAD);
+		packet[d + 2] = gfp.data[d];
+	}
+	for (unsigned c = 0; c < PACKET_CRC_SIZE; ++c)
+	{
+		packet[PACKET_TOTAL_SIZE - PACKET_CRC_SIZE + c] = gfp.crc[c];
 	}
 
-	//CRC's the word
-	crcResult = crc(packet.begin(), packet.end());
+	wConn.buffer_tx.pop_front();
 
-	first = (char)(crcResult >> 24);
-	second = (char)(crcResult >> 16);
-	third = (char)(crcResult >> 8);
-	fourth = (char)(crcResult >> 0);
-
-	//Pushes the crc to the word
-	packet.push_back(first);
-	packet.push_back(second);
-	packet.push_back(third);
-	packet.push_back(fourth);
-
-	//Appends the control characters needed for the word
-	packet.push_front((int)wConn.synFlip);
-	if (wConn.buffer_tx.size() > PACKET_DATA_SIZE)
-	{
-		packet.push_front(ETB);
-	}
-	else
-	{
-		packet.push_front(EOT);
-	}
-
-	PrintToScreen(CHAT_LOG_TX, string("\nPacket Sent!"));
-	/*
-	unsigned wrap = 0;
-	for (char c : packet)
-	{
-		if (++wrap % 80 == 0) PrintToScreen(CHAT_LOG_TX, '\n');
-		PrintToScreen(CHAT_LOG_TX, c);
-	}
-	PrintToScreen(CHAT_LOG_TX, "");
-	*/
-
-	return WriteFile(wConn.hComm, &packet, PACKET_DATA_SIZE, NULL, &wConn.olap);
+	return WriteFile(wConn.hComm, packet, PACKET_DATA_SIZE, NULL, &wConn.olap);
 }
 
 /*------------------------------------------------------------------------------------------------------------------

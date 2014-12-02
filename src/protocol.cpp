@@ -157,6 +157,8 @@ bool Connect()
 
 bool Disconnect()
 {
+	WConn& wConn = GetWConn();
+
 	wConn.isConnected = false;
 	return (CloseHandle(hReceiveThread) && CloseHandle(hTransmitThread) && CloseHandle(wConn.hComm));
 }

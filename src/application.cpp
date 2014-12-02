@@ -234,14 +234,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
     static int newLines = 1;
 	string currMsg;
 
-	
-
 	switch (Message)
 	{
 	case WM_CREATE:
 		srand((unsigned)time(NULL));
 
-		wConn = GetWConn();
 		wConn.lpszCommName = "(UNSET)";
 
 		EnableMenuItem(mymenu, ID_CONNECT, MF_DISABLED);
@@ -277,8 +274,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 				Disconnect();
 			}
 			// refresh the menu with the new information
-			if (wConn.isConnected)		mii_connect.dwTypeData = "Disconnect";
-			else							mii_connect.dwTypeData = "Connect";
+			if (wConn.isConnected)	mii_connect.dwTypeData = "Disconnect";
+			else					mii_connect.dwTypeData = "Connect";
 			SetMenuItemInfo(mymenu, ID_CONNECT, FALSE, &mii_connect);
 			DrawMenuBar(hwnd);
 			break;
@@ -316,23 +313,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 		switch (wParam)
 		{
 		case VK_RETURN:
-			//WriteFile(wConn.hComm, ":", 1, NULL, &osWrite);
-			
 			currMsg = TextHolder::txtHolders[CURRENT_MSG].txtBuffer.back();
 
 			if (currMsg.empty()) break;
+
+			Packetize(currMsg);
 
 			PrintToScreen(CHAT_LOG_TX, currMsg);
 			PrintToScreen(CHAT_LOG_RX, "");
 
 			ClearScreen(CURRENT_MSG);
-
-			for (char c : currMsg)
-			{
-				wConn.buffer_tx.push_back(c);
-			}
-
-			PrintToScreen(CHAT_LOG_TX, to_string(wConn.buffer_tx.size()));
 			break;
 
         case 0x0A:
