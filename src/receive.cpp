@@ -119,12 +119,9 @@ bool FillRxBuffer()
 {
 	WConn& wConn = GetWConn();
 
-	char controlChar;
 	char buffer[PACKET_SIZE];
-	char syncBit;
 	DWORD dwCommEvent;
 	DWORD dwRead = 0;
-	deque<char>& netBuf = wConn.buffer_rx;
 
 	//if the comm mask is successfully set to watch for receiving character events
 	if (!SetCommMask(wConn.hComm, EV_RXCHAR))
@@ -141,32 +138,31 @@ bool FillRxBuffer()
 
 	for (;;)
 	{
+		GrapefruitPacket g;
 		bool packetRead = false;
 
 		if (WaitCommEvent(wConn.hComm, &dwCommEvent, NULL))
 		{
 			do
 			{
-				if (ReadFile(wConn.hComm, &controlChar, 1, NULL, &osRead))
+				if (ReadFile(wConn.hComm, &g.ctrl, 1, NULL, &GetWConn().olap))
 				{
-					PrintToScreen(CHAT_LOG_RX, string("148) ") + controlChar);
+					PrintToScreen(CHAT_LOG_RX, string("148: control character is : ") + g.ctrl);
 
 					//if the data in the buffer is a packet
-					if (controlChar == EOT || controlChar == ETB)
+					if (g.ctrl == EOT || g.ctrl == ETB)
 					{
 						//check sync bits
-						if (ReadFile(wConn.hComm, &syncBit, 1, NULL, &osRead))
+						if (ReadFile(wConn.hComm, &g.sync, 1, NULL, &GetWConn().olap))
 						{
-							PrintToScreen(CHAT_LOG_RX, string("156) ") + controlChar);
+							PrintToScreen(CHAT_LOG_RX, string("156 sync bit is:  ") + g.sync);
 
 							//if the sync bit is OK
-							if (SyncTracker::CheckSync(syncBit))
+							if (SyncTracker::CheckSync(g.sync))
 							{
-								wConn.buffer_rx.push_back(controlChar);
-								wConn.buffer_rx.push_back(syncBit);
 
 								//if you successfully read the packet in
-								if (ReadFile(wConn.hComm, &dwRead, PACKET_SIZE - 2, NULL, &osRead))
+								if (ReadFile(wConn.hComm, &g.data, PACKET_DATA_SIZE, NULL, &GetWConn().olap))
 								{
 									//push the characters into the receive buffer
 									for (unsigned int i = 1; i < PACKET_SIZE; i++)
@@ -179,14 +175,14 @@ bool FillRxBuffer()
 							}
 						}
 						//if EOT, reset Sync Bit
-						if (controlChar == EOT)
+						if (g.ctrl == EOT)
 						{
 							SyncTracker::FlagForReset();
 						}
 					}
-					else if (controlChar == ENQ)
+					else if (g.ctrl == ENQ)
 					{
-						SendChar(ACK, 0);
+						SendChar(ACK);
 					}
 				}
 				else
@@ -194,25 +190,23 @@ bool FillRxBuffer()
 					//an error occured while reading in the file
 					break;
 				}
-			} while (dwRead);
-
+			} while (g.data);
+			
+			//if a packet was read in
 			if (packetRead)
 			{
-				if (ValidateData())
+				//if the packet is successfully validated
+				if (ValidateData(g))
 				{
-					TrimPacket();
-					
-					while (!netBuf.empty()) //clear buffer
+					for (int i = 0; i < PACKET_DATA_SIZE; i++)
 					{
-						PrintToScreen(CHAT_LOG_RX, netBuf.front());
-						netBuf.pop_front();
+						PrintToScreen(CHAT_LOG_RX, g.data[i]);
 					}
-
-					SendChar(ACK, 0);
+					SendChar(ACK);
 				}
 				else
 				{
-					SendChar(NAK, 0);
+					SendChar(NAK);
 				}
 			}
 		}
@@ -236,21 +230,30 @@ bool FillRxBuffer()
 // Created On: November 29, 2014 by Sebastian Pelka
 //
 //--------------------------------------------------------------------------------------------------
-bool ValidateData()
+bool ValidateData(GrapefruitPacket g)
 {
     WConn w = GetWConn();
+	stringstream ss;
 
-	if (w.buffer_rx.empty()) return false;
+	if (g.data == NULL)
+	{
+		return false;
+	}
 
-    unsigned long crcResult = crc( w.buffer_rx.begin() + 2, w.buffer_rx.begin() + 3 + PACKET_SIZE );
+	crcInit();
+	unsigned long crcResult = crc(g.data, PACKET_DATA_SIZE);
 
-    deque<char>::iterator it = w.buffer_rx.begin() + 3 + PACKET_SIZE;
-    for( int i = 0; i < 4; ++i )
-    {
-        if( (char)crcResult != *it )
-            return false;
-    }
-    return true;
+	ss << crcResult;
+
+	unsigned char chararray[4];
+	ss >> chararray;
+
+	if (chararray == g.data)
+	{
+		return true;
+	}
+
+	return false;
 }
 
 /*------------------------------------------------------------------------------------------------------------------

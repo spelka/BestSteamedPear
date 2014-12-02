@@ -18,7 +18,7 @@ class SyncTracker
 DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm);
 char ReadChar(DWORD timeout);
 bool FillRxBuffer();
-bool ValidateData();
+bool ValidateData(GrapefruitPacket g);
 void TrimPacket();
 
 #endif // LISTEN_H
