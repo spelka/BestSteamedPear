@@ -119,7 +119,7 @@ bool FillRxBuffer()
 {
 	WConn& wConn = GetWConn();
 
-	char buffer[PACKET_SIZE];
+	char buffer[PACKET_TOTAL_SIZE];
 	DWORD dwCommEvent;
 	DWORD dwRead = 0;
 
@@ -147,16 +147,12 @@ bool FillRxBuffer()
 			{
 				if (ReadFile(wConn.hComm, &g.ctrl, 1, NULL, &GetWConn().olap))
 				{
-					PrintToScreen(CHAT_LOG_RX, string("148: control character is : ") + g.ctrl);
-
 					//if the data in the buffer is a packet
 					if (g.ctrl == EOT || g.ctrl == ETB)
 					{
 						//check sync bits
 						if (ReadFile(wConn.hComm, &g.sync, 1, NULL, &GetWConn().olap))
 						{
-							PrintToScreen(CHAT_LOG_RX, string("156 sync bit is:  ") + g.sync);
-
 							//if the sync bit is OK
 							if (SyncTracker::CheckSync(g.sync))
 							{
@@ -164,12 +160,6 @@ bool FillRxBuffer()
 								//if you successfully read the packet in
 								if (ReadFile(wConn.hComm, &g.data, PACKET_DATA_SIZE, NULL, &GetWConn().olap))
 								{
-									//push the characters into the receive buffer
-									for (unsigned int i = 1; i < PACKET_SIZE; i++)
-									{
-										wConn.buffer_rx.push_back(buffer[i]);
-									}
-
 									packetRead = true;
 								}
 							}
@@ -198,10 +188,9 @@ bool FillRxBuffer()
 				//if the packet is successfully validated
 				if (ValidateData(g))
 				{
-					for (int i = 0; i < PACKET_DATA_SIZE; i++)
-					{
-						PrintToScreen(CHAT_LOG_RX, g.data[i]);
-					}
+					stringstream ss;
+					ss << g.data;
+					PrintToScreen(CHAT_LOG_RX, ss.str());
 					SendChar(ACK);
 				}
 				else
@@ -254,46 +243,4 @@ bool ValidateData(GrapefruitPacket g)
 	}
 
 	return false;
-}
-
-/*------------------------------------------------------------------------------------------------------------------
--- FUNCTION: 	CheckForETX
---
--- DATE: 		November 29, 2014
---
--- REVISIONS: 	NONE
---
--- DESIGNER: 	Sebastian Pelka
---
--- PROGRAMMER: 	Sebastian Pelka
---
--- INTERFACE: 	bool CheckForETX()
---
--- RETURNS: 	true if the ETX character is found
---
--- NOTES:
--- Iterates over the WConn received buffer, if the CRC validator function confirmed the received data is good. This
--- function pulls the data out of the packet structure and adds it to the print buffer, which containes all the
--- validated data to be printed to the screen so far.
-----------------------------------------------------------------------------------------------------------------------*/
-
-void TrimPacket()
-{
-    deque<char> netBuf = wConn.buffer_rx;
-    netBuf.pop_front();
-    netBuf.pop_front();
-
-	deque<char>::iterator packetIterator = netBuf.begin();
-
-	for (unsigned int i = 0; i < 1018; i++)
-	{
-		if ((*packetIterator) == ETX)
-		{
-            break;
-		}
-		packetIterator++;
-	}
-    netBuf.erase(packetIterator, netBuf.end());
-
-
 }
