@@ -25,7 +25,6 @@
 #include "transmit.h"
 #include "application.h"
 #include <stdlib.h>
-#include <algorithm>
 
 using namespace std;
 
@@ -102,19 +101,6 @@ WConn& GetWConn()
 {
 	static WConn wConn = { 0 };
 	return wConn;
-}
-
-void Packetize(std::string s)
-{
-	while (s.size() > PACKET_DATA_SIZE)
-	{
-		GrapefruitPacket gfp;
-
-		gfp.ctrl = s[0];
-		gfp.sync = s[1];
-
-		copy(s.begin(), s.begin() + PACKET_DATA_SIZE - 1, begin(gfp.data));
-	}
 }
 
 bool Configure(LPCSTR lpszCommName)

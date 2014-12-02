@@ -1,12 +1,12 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
+#include <windows.h>
+#include <deque>
+
 #define PACKET_TOTAL_SIZE 1024
 #define PACKET_DATA_SIZE 1018
 #define PACKET_CRC_SIZE 4
-
-#include <windows.h>
-#include <deque>
 
 /*
 const char NUL = 0x00;
@@ -37,10 +37,10 @@ const unsigned MAX_MISS = 3;
 
 struct GrapefruitPacket
 {
-	char ctrl;
-	char sync;
-	char data[PACKET_DATA_SIZE];
-	char crc[PACKET_CRC_SIZE];
+	unsigned char ctrl;
+	unsigned char sync;
+	unsigned char data[PACKET_DATA_SIZE];
+	unsigned char crc[PACKET_CRC_SIZE];
 };
 
 //////
@@ -84,8 +84,6 @@ private:
 //////
 
 WConn& GetWConn();
-
-void Packetize(std::string s);
 
 bool Configure(LPCSTR lpszCommName);
 bool Connect();
