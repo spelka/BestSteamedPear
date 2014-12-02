@@ -172,8 +172,6 @@ bool SendPacket()
 		packet[PACKET_TOTAL_SIZE - PACKET_CRC_SIZE + c] = gfp.crc[c];
 	}
 
-	wConn.buffer_tx.pop_front();
-
 	return WriteFile(wConn.hComm, packet, PACKET_DATA_SIZE, NULL, &wConn.olap);
 }
 
@@ -204,8 +202,8 @@ void Transmit()
 	{
 		char response = NUL;
 
-		do {
-
+		do
+		{
 			if (wConn.buffer_tx.empty()) break;
 
 			SendPacket();
@@ -215,10 +213,7 @@ void Transmit()
 			switch (response)
 			{
 			case ACK:
-				PrintToScreen(CHAT_LOG_TX, response);
-
-				wConn.buffer_tx.erase(wConn.buffer_tx.begin(),
-					wConn.buffer_tx.begin() + PACKET_DATA_SIZE - 1);
+				wConn.buffer_tx.pop_front();
 				wConn.synFlip = !wConn.synFlip;
 				break;
 
@@ -229,8 +224,8 @@ void Transmit()
 			default:
 				++missCount;
 			}
-
-		} while (response == NUL && missCount < MAX_MISS);
+		}
+		while (response == NUL && missCount < MAX_MISS);
 	}
 
 	ResetState();
