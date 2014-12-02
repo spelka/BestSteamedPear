@@ -25,6 +25,7 @@
 #include "transmit.h"
 #include "application.h"
 #include <stdlib.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -89,14 +90,6 @@ VOID CALLBACK Timer::TimerCallBack(
 
 //////
 
-WConn& GetWConn()
-{
-	static WConn wConn = { 0 };
-	return wConn;
-}
-
-//////
-
 COMMCONFIG	cc;						// the communication config
 
 HANDLE hReceiveThread;				// the reading thread handle
@@ -105,10 +98,30 @@ DWORD idReceiveThread;				// the reading thread handle identification
 HANDLE hTransmitThread;				// the transmitting thread handle
 DWORD idTransmitThread;				// the transmitting thread handle identification
 
+WConn& GetWConn()
+{
+	static WConn wConn = { 0 };
+	return wConn;
+}
+
+void Packetize(std::string s)
+{
+	while (s.size() > PACKET_DATA_SIZE)
+	{
+		GrapefruitPacket gfp;
+
+		gfp.ctrl = s[0];
+		gfp.sync = s[1];
+
+		copy(s.begin(), s.begin() + PACKET_DATA_SIZE - 1, begin(gfp.data));
+	}
+}
+
 bool Configure(LPCSTR lpszCommName)
 {
 	WConn& wConn = GetWConn();
 	wConn.lpszCommName = lpszCommName;
+	wConn.olap = { 0 };
 
 	cc.dwSize = sizeof(COMMCONFIG);
 	cc.wVersion = 0x100;
@@ -158,6 +171,6 @@ bool Connect()
 
 bool Disconnect()
 {
-	GetWConn().isConnected = false;
-	return (CloseHandle(hReceiveThread) && CloseHandle(hTransmitThread) && CloseHandle(GetWConn().hComm));
+	wConn.isConnected = false;
+	return (CloseHandle(hReceiveThread) && CloseHandle(hTransmitThread) && CloseHandle(wConn.hComm));
 }

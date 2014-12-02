@@ -1,6 +1,10 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
+#define PACKET_TOTAL_SIZE 1024
+#define PACKET_DATA_SIZE 1018
+#define PACKET_CRC_SIZE 4
+
 #include <windows.h>
 #include <deque>
 
@@ -26,21 +30,29 @@ const char NAK = 'N';
 const char ETB = 'B';
 const char PAD = 'P';
 
-const unsigned PACKET_SIZE = 1024; //packet size in bytes
-const unsigned PACKET_DATA_SIZE = 1018; //packet size in bytes
-
 const unsigned MAX_SEND = 10;
 const unsigned MAX_MISS = 3;
+
+//////
+
+struct GrapefruitPacket
+{
+	char ctrl;
+	char sync;
+	char data[PACKET_DATA_SIZE];
+	char crc[PACKET_CRC_SIZE];
+};
 
 //////
 
 struct WConn
 {
 	HANDLE hComm;
+	OVERLAPPED olap;
 	LPCSTR lpszCommName;
 
-	std::deque<char> buffer_receive;
-	std::deque<char> buffer_send;
+	std::deque<GrapefruitPacket> buffer_rx;
+	std::deque<GrapefruitPacket> buffer_tx;
 
 	unsigned
 		TO1,
@@ -72,6 +84,8 @@ private:
 //////
 
 WConn& GetWConn();
+
+void Packetize(std::string s);
 
 bool Configure(LPCSTR lpszCommName);
 bool Connect();

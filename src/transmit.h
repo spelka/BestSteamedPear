@@ -5,7 +5,7 @@
 
 DWORD WINAPI TransmitThread(LPVOID lpvThreadParm);
 
-bool SendChar(char charToSend, unsigned toDuration);
+bool SendChar(char charToSend);
 bool SendPacket();
 
 void Transmit();

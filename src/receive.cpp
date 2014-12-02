@@ -44,9 +44,11 @@ void SyncTracker::FlagForReset()
 //Comment
 DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
 {
+	WConn& wConn = GetWConn();
+
 	FillRxBuffer();
 
-	GetWConn().buffer_receive.clear();
+	wConn.buffer_rx.clear();
 
 	return NULL;
 }
@@ -72,19 +74,19 @@ DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
 ----------------------------------------------------------------------------------------------------------------------*/
 char ReadChar(DWORD timeout)
 {
-	OVERLAPPED osRead = { 0 };
-
+	WConn& wConn = GetWConn();
+	
 	timeouts.ReadIntervalTimeout = timeout;
 	char received = NUL;
 	// set timeouts
-	if (!SetCommTimeouts(GetWConn().hComm, &timeouts))
+	if (!SetCommTimeouts(wConn.hComm, &timeouts))
 	{
 		// Error setting time-outs.
 	}
 
 	//read in character from comm port
 	//if you fail to read in a file, return NUL
-	ReadFile(GetWConn().hComm, &received, 1, NULL, &osRead);
+	ReadFile(wConn.hComm, &received, 1, NULL, &wConn.olap);
 
 	if (received != NUL) PrintToScreen(CHAT_LOG_RX, received);
 	
@@ -115,24 +117,24 @@ char ReadChar(DWORD timeout)
 ----------------------------------------------------------------------------------------------------------------------*/
 bool FillRxBuffer()
 {
+	WConn& wConn = GetWConn();
+
 	char controlChar;
 	char buffer[PACKET_SIZE];
 	char syncBit;
 	DWORD dwCommEvent;
 	DWORD dwRead = 0;
-	OVERLAPPED osRead = { 0 };
-
-	deque<char>& netBuf = GetWConn().buffer_receive;
+	deque<char>& netBuf = wConn.buffer_rx;
 
 	//if the comm mask is successfully set to watch for receiving character events
-	if (!SetCommMask(GetWConn().hComm, EV_RXCHAR))
+	if (!SetCommMask(wConn.hComm, EV_RXCHAR))
 	{
 		return false;
 	}
     
-	timeouts.ReadIntervalTimeout = GetWConn().TO1;
+	timeouts.ReadIntervalTimeout = wConn.TO1;
 	// set timeouts
-	if (!SetCommTimeouts(GetWConn().hComm, &timeouts))
+	if (!SetCommTimeouts(wConn.hComm, &timeouts))
 	{
 		// Error setting time-outs.
 	}
@@ -141,11 +143,11 @@ bool FillRxBuffer()
 	{
 		bool packetRead = false;
 
-		if (WaitCommEvent(GetWConn().hComm, &dwCommEvent, NULL))
+		if (WaitCommEvent(wConn.hComm, &dwCommEvent, NULL))
 		{
 			do
 			{
-				if (ReadFile(GetWConn().hComm, &controlChar, 1, NULL, &osRead))
+				if (ReadFile(wConn.hComm, &controlChar, 1, NULL, &osRead))
 				{
 					PrintToScreen(CHAT_LOG_RX, string("148) ") + controlChar);
 
@@ -153,30 +155,30 @@ bool FillRxBuffer()
 					if (controlChar == EOT || controlChar == ETB)
 					{
 						//check sync bits
-						if (ReadFile(GetWConn().hComm, &syncBit, 1, NULL, &osRead))
+						if (ReadFile(wConn.hComm, &syncBit, 1, NULL, &osRead))
 						{
 							PrintToScreen(CHAT_LOG_RX, string("156) ") + controlChar);
 
 							//if the sync bit is OK
 							if (SyncTracker::CheckSync(syncBit))
 							{
-								GetWConn().buffer_receive.push_back(controlChar);
-								GetWConn().buffer_receive.push_back(syncBit);
+								wConn.buffer_rx.push_back(controlChar);
+								wConn.buffer_rx.push_back(syncBit);
 
 								//if you successfully read the packet in
-								if (ReadFile(GetWConn().hComm, &dwRead, PACKET_SIZE - 2, NULL, &osRead))
+								if (ReadFile(wConn.hComm, &dwRead, PACKET_SIZE - 2, NULL, &osRead))
 								{
 									//push the characters into the receive buffer
 									for (unsigned int i = 1; i < PACKET_SIZE; i++)
 									{
-										GetWConn().buffer_receive.push_back(buffer[i]);
+										wConn.buffer_rx.push_back(buffer[i]);
 									}
 
 									packetRead = true;
 								}
 							}
 						}
-						//if EOT, reset Sync  Bit
+						//if EOT, reset Sync Bit
 						if (controlChar == EOT)
 						{
 							SyncTracker::FlagForReset();
@@ -238,11 +240,11 @@ bool ValidateData()
 {
     WConn w = GetWConn();
 
-	if (w.buffer_receive.empty()) return false;
+	if (w.buffer_rx.empty()) return false;
 
-    unsigned long crcResult = crc( w.buffer_receive.begin() + 2, w.buffer_receive.begin() + 3 + PACKET_SIZE );
+    unsigned long crcResult = crc( w.buffer_rx.begin() + 2, w.buffer_rx.begin() + 3 + PACKET_SIZE );
 
-    deque<char>::iterator it = w.buffer_receive.begin() + 3 + PACKET_SIZE;
+    deque<char>::iterator it = w.buffer_rx.begin() + 3 + PACKET_SIZE;
     for( int i = 0; i < 4; ++i )
     {
         if( (char)crcResult != *it )
@@ -274,7 +276,7 @@ bool ValidateData()
 
 void TrimPacket()
 {
-    deque<char> netBuf = GetWConn().buffer_receive;
+    deque<char> netBuf = wConn.buffer_rx;
     netBuf.pop_front();
     netBuf.pop_front();
 

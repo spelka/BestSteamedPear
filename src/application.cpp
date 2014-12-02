@@ -234,7 +234,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
     static int newLines = 1;
 	string currMsg;
 
-	OVERLAPPED osWrite = { 0 };
+	
 
 	switch (Message)
 	{
@@ -259,7 +259,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			break;
 
 		case ID_CONNECT:
-			if (!GetWConn().isConnected)
+			if (!wConn.isConnected)
 			{
 				if (Connect())
 				{
@@ -277,7 +277,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 				Disconnect();
 			}
 			// refresh the menu with the new information
-			if (GetWConn().isConnected)		mii_connect.dwTypeData = "Disconnect";
+			if (wConn.isConnected)		mii_connect.dwTypeData = "Disconnect";
 			else							mii_connect.dwTypeData = "Connect";
 			SetMenuItemInfo(mymenu, ID_CONNECT, FALSE, &mii_connect);
 			DrawMenuBar(hwnd);
@@ -293,7 +293,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			break;
 
 		case ID_EXIT:
-			if (GetWConn().isConnected) Disconnect();
+			if (wConn.isConnected) Disconnect();
 			PostQuitMessage(0);
 			system("cmd"); // open a command prompt
 			break;
@@ -301,7 +301,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 		break;
 
 	case WM_CHAR:				// Process keystroke
-		if (GetWConn().isConnected)
+		if (wConn.isConnected)
 		{
 			if (wParam == VK_ESCAPE)
 			{
@@ -329,10 +329,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 
 			for (char c : currMsg)
 			{
-				GetWConn().buffer_send.push_back(c);
+				wConn.buffer_tx.push_back(c);
 			}
 
-			PrintToScreen(CHAT_LOG_TX, to_string(GetWConn().buffer_send.size()));
+			PrintToScreen(CHAT_LOG_TX, to_string(wConn.buffer_tx.size()));
 			break;
 
         case 0x0A:
@@ -362,7 +362,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 		break;
 
 	case WM_DESTROY:			// Terminate program
-		if (GetWConn().isConnected) Disconnect();
+		if (wConn.isConnected) Disconnect();
 
 		PostQuitMessage(0);
 		break;

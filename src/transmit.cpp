@@ -49,17 +49,19 @@ using namespace std;
 ----------------------------------------------------------------------------------------------------------------------*/
 DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 {
-	for (;;)
+	WConn& wConn = GetWConn();
+
+	while (wConn.isConnected)
 	{
-		if (GetWConn().buffer_send.empty()) continue;
+		if (wConn.buffer_tx.empty()) continue;
 
-		SendChar(ENQ, GetWConn().TO2);
+		SendChar(ENQ);
 
-		char response = ReadChar(GetWConn().TO2);
+		char response = ReadChar(wConn.TO2);
 
 		//PrintToScreen(CHAT_LOG_RX, response);
 
-		//PrintToScreen(CHAT_LOG_TX, GetWConn().buffer_send.size());
+		//PrintToScreen(CHAT_LOG_TX, wConn.buffer_tx.size());
 
 		if (response != NUL)
 		{
@@ -71,7 +73,7 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 		}
 	}
 
-	GetWConn().buffer_send.clear();
+	wConn.buffer_tx.clear();
 
 	return NULL;
 }
@@ -90,13 +92,13 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 -- NOTES:
 -- This function is used by different parts of the program to send characters(mostly control characters)
 ----------------------------------------------------------------------------------------------------------------------*/
-bool SendChar(char charToSend, unsigned toDuration)
+bool SendChar(char charToSend)
 {
-	OVERLAPPED osWrite = { 0 };
+	WConn &wConn = GetWConn();
 
 	PrintToScreen(CHAT_LOG_TX, charToSend);
 
-	return WriteFile(GetWConn().hComm, &charToSend, 1, NULL, &osWrite);
+	return WriteFile(wConn.hComm, &charToSend, 1, NULL, &wConn.olap);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -116,20 +118,19 @@ bool SendChar(char charToSend, unsigned toDuration)
 ----------------------------------------------------------------------------------------------------------------------*/
 bool SendPacket()
 {
+	WConn &wConn = GetWConn();
 	deque<char> packet;
 	unsigned long crcResult;
 	char first, second, third, fourth;
 
-	OVERLAPPED osWrite = { 0 };
-
 	packet.insert(
 		packet.end(),
 
-		GetWConn().buffer_send.begin(),
+		wConn.buffer_tx.begin(),
 
-		/*if*/     GetWConn().buffer_send.size() >= PACKET_DATA_SIZE
-		/*true*/   ? GetWConn().buffer_send.begin() + PACKET_DATA_SIZE
-		/*false*/  : GetWConn().buffer_send.begin() + GetWConn().buffer_send.size()
+		/*if*/     wConn.buffer_tx.size() >= PACKET_DATA_SIZE
+		/*true*/   ? wConn.buffer_tx.begin() + PACKET_DATA_SIZE
+		/*false*/  : wConn.buffer_tx.begin() + wConn.buffer_tx.size()
 		);
 
 	if (packet.size() < PACKET_DATA_SIZE) packet.push_back(ETX);
@@ -155,8 +156,8 @@ bool SendPacket()
 	packet.push_back(fourth);
 
 	//Appends the control characters needed for the word
-	packet.push_front((int)GetWConn().synFlip);
-	if (GetWConn().buffer_send.size() > PACKET_DATA_SIZE)
+	packet.push_front((int)wConn.synFlip);
+	if (wConn.buffer_tx.size() > PACKET_DATA_SIZE)
 	{
 		packet.push_front(ETB);
 	}
@@ -165,7 +166,8 @@ bool SendPacket()
 		packet.push_front(EOT);
 	}
 
-	PrintToScreen(CHAT_LOG_TX, string("\nPacket:"));
+	PrintToScreen(CHAT_LOG_TX, string("\nPacket Sent!"));
+	/*
 	unsigned wrap = 0;
 	for (char c : packet)
 	{
@@ -173,8 +175,9 @@ bool SendPacket()
 		PrintToScreen(CHAT_LOG_TX, c);
 	}
 	PrintToScreen(CHAT_LOG_TX, "");
+	*/
 
-	return WriteFile(GetWConn().hComm, &packet, PACKET_DATA_SIZE, NULL, &osWrite);
+	return WriteFile(wConn.hComm, &packet, PACKET_DATA_SIZE, NULL, &wConn.olap);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -189,12 +192,14 @@ bool SendPacket()
 -- PROGRAMMER: 		Alex Lam
 --
 -- NOTES:
--- This is the trasmit state, it will send data if the buffer_send is not empty 
+-- This is the trasmit state, it will send data if the buffer_tx is not empty 
 -- continue to send data until MAX_MISS or MAX_SEND has been reached.
 ----------------------------------------------------------------------------------------------------------------------*/
 void Transmit()
 {
-	if (GetWConn().buffer_send.empty()) return;
+	WConn &wConn = GetWConn();
+
+	if (wConn.buffer_tx.empty()) return;
 
 	int missCount = 0;
 
@@ -204,24 +209,24 @@ void Transmit()
 
 		do {
 
-			if (GetWConn().buffer_send.empty()) break;
+			if (wConn.buffer_tx.empty()) break;
 
 			SendPacket();
 
-			response = ReadChar(GetWConn().TO3);
+			response = ReadChar(wConn.TO3);
 
 			switch (response)
 			{
 			case ACK:
 				PrintToScreen(CHAT_LOG_TX, response);
 
-				GetWConn().buffer_send.erase(GetWConn().buffer_send.begin(),
-					GetWConn().buffer_send.begin() + PACKET_DATA_SIZE - 1);
-				GetWConn().synFlip = !GetWConn().synFlip;
+				wConn.buffer_tx.erase(wConn.buffer_tx.begin(),
+					wConn.buffer_tx.begin() + PACKET_DATA_SIZE - 1);
+				wConn.synFlip = !wConn.synFlip;
 				break;
 
 			case RVI:
-				GetWConn().canTransmit = !GetWConn().canTransmit;
+				wConn.canTransmit = !wConn.canTransmit;
 				return;
 
 			default:
