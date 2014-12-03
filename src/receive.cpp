@@ -46,7 +46,10 @@ DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
 {
 	WConn& wConn = GetWConn();
 
-	FillRxBuffer();
+	while (wConn.status == WConn::IDLE)
+	{
+		PrintToScreen(CHAT_LOG_RX, ReadChar(5000), false, true);
+	}
 
 	wConn.buffer_rx_packet.clear();
 
@@ -76,15 +79,32 @@ char ReadChar(DWORD timeout)
 {
 	WConn& wConn = GetWConn();
 
-	if (wConn.buffer_rx_ctrl.empty()) return NUL;
+	DWORD nBytesRead, dwError;
+	COMSTAT cs;
+	char ctrl = NUL;
 
-	char ctrl = wConn.buffer_rx_ctrl.front();
+	timeouts.ReadIntervalTimeout = MAXDWORD;
+	timeouts.ReadTotalTimeoutConstant = timeout;
 
-	wConn.buffer_rx_ctrl.pop_front();
+	// set timeouts
+	if (!SetCommTimeouts(wConn.hComm, &timeouts))
+	{
+		return NUL;
+	}
 
-	PrintToScreen(CHAT_LOG_RX, ctrl, false, true);
-	
+	ClearCommError(wConn.hComm, &dwError, &cs);
+
+	if (!ReadFile(wConn.hComm, &ctrl, 1, &nBytesRead, NULL))
+	{
+		return NUL;
+	}
+
 	return ctrl;
+}
+
+bool ReadChar(char expectedChar, DWORD timeout)
+{
+	return ReadChar(timeout) == expectedChar;
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -109,7 +129,7 @@ char ReadChar(DWORD timeout)
 --
 -- SOURCE: http://msdn.microsoft.com/en-us/library/ff802693.aspx
 ----------------------------------------------------------------------------------------------------------------------*/
-bool FillRxBuffer()
+bool ReadPacket(DWORD timeout)
 {
 	WConn& wConn = GetWConn();
 
@@ -121,87 +141,85 @@ bool FillRxBuffer()
 	{
 		return false;
 	}
-    
-	timeouts.ReadIntervalTimeout = wConn.TO1;
+
+	timeouts.ReadIntervalTimeout = MAXDWORD;
+	timeouts.ReadTotalTimeoutConstant = timeout;
+
 	// set timeouts
 	if (!SetCommTimeouts(wConn.hComm, &timeouts))
 	{
 		return false;
 	}
 
-	while (wConn.isConnected)
+	GrapefruitPacket g;
+	bool packetRead = false;
+
+	if (WaitCommEvent(wConn.hComm, &dwEvent, NULL))
 	{
-		GrapefruitPacket g;
-		bool packetRead = false;
+		ClearCommError(wConn.hComm, &dwError, &cs);
 
-		if (WaitCommEvent(wConn.hComm, &dwEvent, NULL))
+		do
 		{
-			ClearCommError(wConn.hComm, &dwError, &cs);
-
-			do
+			if (ReadFile(wConn.hComm, &g.ctrl, 1, &nBytesRead, NULL))
 			{
-				if (ReadFile(wConn.hComm, &g.ctrl, 1, &nBytesRead, NULL))
+				//if the data in the buffer is a packet
+				if (g.ctrl == EOT || g.ctrl == ETB)
 				{
-					//if the data in the buffer is a packet
-					if (g.ctrl == EOT || g.ctrl == ETB)
+					//check sync bits
+					if (ReadFile(wConn.hComm, &g.sync, 1, &nBytesRead, NULL))
 					{
-						//check sync bits
-						if (ReadFile(wConn.hComm, &g.sync, 1, &nBytesRead, NULL))
+						//if the sync bit is OK
+						if (SyncTracker::CheckSync(g.sync))
 						{
-							//if the sync bit is OK
-							if (SyncTracker::CheckSync(g.sync))
+							//if you successfully read the packet in
+							if (ReadFile(wConn.hComm, g.data, PACKET_DATA_SIZE, &nBytesRead, NULL))
 							{
-								//if you successfully read the packet in
-								if (ReadFile(wConn.hComm, g.data, PACKET_DATA_SIZE, &nBytesRead, NULL))
-								{
-									packetRead = true;
-									PrintToScreen(CHAT_LOG_RX, string(reinterpret_cast<char*>(g.data)), false, true);
-								}
+								packetRead = true;
+								PrintToScreen(CHAT_LOG_RX, string(reinterpret_cast<char*>(g.data)), false, true);
 							}
 						}
-						//if EOT, reset Sync Bit
-						if (g.ctrl == EOT)
-						{
-							SyncTracker::FlagForReset();
-						}
 					}
-					else
+					//if EOT, reset Sync Bit
+					if (g.ctrl == EOT)
 					{
-						wConn.buffer_rx_ctrl.push_back(g.ctrl);
-
-						if (g.ctrl == ENQ)
-						{
-							SendChar(ACK);
-						}
+						SyncTracker::FlagForReset();
 					}
 				}
 				else
 				{
-					//an error occured while reading in the file
-					break;
-				}
-			} while (g.data);
-			
-			//if a packet was read in
-			if (packetRead)
-			{
-				//if the packet is successfully validated
-				if (ValidateData(g))
-				{
-					PrintToScreen(CHAT_LOG_RX, string(reinterpret_cast<char*>(g.data)), false, true);
-					SendChar(ACK);
-				}
-				else
-				{
-					SendChar(NAK);
+					wConn.buffer_rx_ctrl.push_back(g.ctrl);
+
+					if (g.ctrl == ENQ)
+					{
+						SendChar(ACK);
+					}
 				}
 			}
-		}
-		else
+			else
+			{
+				//an error occured while reading in the file
+				break;
+			}
+		} while (g.data);
+			
+		//if a packet was read in
+		if (packetRead)
 		{
-			//error in WaitCommEvent
-			break;
+			//if the packet is successfully validated
+			if (ValidatePacket(g))
+			{
+				PrintToScreen(CHAT_LOG_RX, string(reinterpret_cast<char*>(g.data)), false, true);
+				SendChar(ACK);
+			}
+			else
+			{
+				SendChar(NAK);
+			}
 		}
+	}
+	else
+	{
+		//error in WaitCommEvent
 	}
 
 	PurgeComm(wConn.hComm, PURGE_RXCLEAR);
@@ -220,7 +238,7 @@ bool FillRxBuffer()
 // Created On: November 29, 2014 by Sebastian Pelka
 //
 //--------------------------------------------------------------------------------------------------
-bool ValidateData(GrapefruitPacket g)
+bool ValidatePacket(GrapefruitPacket g)
 {
     WConn w = GetWConn();
 	stringstream ss;

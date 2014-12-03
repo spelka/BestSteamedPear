@@ -50,7 +50,7 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 {
 	WConn& wConn = GetWConn();
 
-	while (wConn.isConnected)
+	while (wConn.status != WConn::DEAD)
 	{
 		if (wConn.buffer_tx.empty()) continue;
 

@@ -47,6 +47,11 @@ struct GrapefruitPacket
 
 struct WConn
 {
+	enum status
+	{
+		DEAD, IDLE, RECEIVING, TRANSMITTING
+	};
+
 	HANDLE hComm;
 	COMMCONFIG cc;
 	LPCSTR lpszCommName;
@@ -55,31 +60,13 @@ struct WConn
 	std::deque<GrapefruitPacket> buffer_rx_packet;
 	std::deque<GrapefruitPacket> buffer_tx;
 
-	unsigned
-		TO1,
-		TO2,
-		TO3,
-		TO4
-		;
+	DWORD TO1, TO2, TO3, TO4;
 
-	bool isConnected;
+	status status;
+
 	bool canTransmit;
     bool rvi;
 	bool synFlip;
-};
-
-//////
-
-class Timer
-{
-public:
-	static char WaitFor(unsigned timeout);
-
-private:
-	static VOID CALLBACK TimerCallBack(HWND, UINT, UINT, DWORD);
-
-	static bool timerCalledBack;
-	static char response;
 };
 
 //////

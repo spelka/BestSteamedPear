@@ -238,8 +238,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 	case WM_CREATE:
 		srand((unsigned)time(NULL));
 
-		wConn.lpszCommName = "(UNSET)";
-
 		EnableMenuItem(mymenu, ID_CONNECT, MF_DISABLED);
 		DrawMenuBar(hwnd);
 		break;
@@ -255,7 +253,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			break;
 
 		case ID_CONNECT:
-			if (!wConn.isConnected)
+			if (!wConn.status != WConn::DEAD)
 			{
 				if (Connect())
 				{
@@ -273,7 +271,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 				Disconnect();
 			}
 			// refresh the menu with the new information
-			if (wConn.isConnected)	mii_connect.dwTypeData = "Disconnect";
+			if (wConn.status != WConn::DEAD)	mii_connect.dwTypeData = "Disconnect";
 			else					mii_connect.dwTypeData = "Connect";
 			SetMenuItemInfo(mymenu, ID_CONNECT, FALSE, &mii_connect);
 			DrawMenuBar(hwnd);
@@ -289,7 +287,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			break;
 
 		case ID_EXIT:
-			if (wConn.isConnected) Disconnect();
+			if (wConn.status != WConn::DEAD) Disconnect();
 			PostQuitMessage(0);
 			system("cmd"); // open a command prompt
 			break;
@@ -316,7 +314,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 		break;
 
 	case WM_CHAR:				// Process keystroke
-		if (wConn.isConnected)
+		if (wConn.status != WConn::DEAD)
 		{
 			if (wParam == VK_ESCAPE)
 			{
@@ -372,7 +370,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 		break;
 
 	case WM_DESTROY:			// Terminate program
-		if (wConn.isConnected) Disconnect();
+		if (wConn.status != WConn::DEAD) Disconnect();
 
 		PostQuitMessage(0);
 		break;
