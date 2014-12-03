@@ -249,7 +249,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 		switch (LOWORD(wParam))
 		{
 		case ID_CONFIGURE:
-			Configure("COM1");
+			Configure(wConn.lpszCommName);
 			EnableMenuItem(mymenu, ID_CONNECT, MF_ENABLED);
 			DrawMenuBar(hwnd);
 			break;
@@ -292,6 +292,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			if (wConn.isConnected) Disconnect();
 			PostQuitMessage(0);
 			system("cmd"); // open a command prompt
+			break;
+
+		case IDM_COM1:
+			wConn.lpszCommName = "com1";
+			break;
+		case IDM_COM2:
+			wConn.lpszCommName = "com2";
+			break;
+		case IDM_COM3:
+			wConn.lpszCommName = "com3";
+			break;
+		case IDM_COM4:
+			wConn.lpszCommName = "com4";
+			break;
+		case IDM_COM5:
+			wConn.lpszCommName = "com5";
+			break;
+		case IDM_COM6:
+			wConn.lpszCommName = "com6";
 			break;
 		}
 		break;
