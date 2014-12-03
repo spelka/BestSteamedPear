@@ -31,7 +31,7 @@ LRESULT CALLBACK WndProc(
 void PaintComponents();
 
 void PrintToScreen(txtholder_idx whichHolder, std::string s, bool newlinebefore = false, bool newlineafter = true);
-void PrintToScreen(txtholder_idx whichHolder, char c, bool newlinebefore = false, bool newlineafter = true);
+void PrintToScreen(txtholder_idx whichHolder, char c, bool newlinebefore = false, bool newlineafter = false);
 
 void RedrawText(txtholder_idx whichHolder = ALL);
 
