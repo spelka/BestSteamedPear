@@ -61,8 +61,9 @@ bool Connect()
 
 	wConn.status = WConn::IDLE;
 
-	if ((wConn.hComm=CreateFile (wConn.lpszCommName, GENERIC_READ|GENERIC_WRITE, 
-			0, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
+	if ((wConn.hComm = CreateFile(wConn.lpszCommName, GENERIC_READ | GENERIC_WRITE, 0,
+		NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL))
+		== INVALID_HANDLE_VALUE)
 	{
 		MessageBox(hwnd, std::string("Error opening COM port: ").append(wConn.lpszCommName).c_str(), "", MB_OK);
 		return false;
