@@ -65,6 +65,7 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 		if (response != NUL)
 		{
 			Transmit();
+			wConn.buffer_tx.clear();
 		}
 		else //Timed out
 		{
