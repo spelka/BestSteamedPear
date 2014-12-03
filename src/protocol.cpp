@@ -47,10 +47,10 @@ bool Configure(LPCSTR lpszCommName)
 		return false;
 	SetCommState(wConn.hComm, &wConn.cc.dcb);
 
-	wConn.TO3 = 1200.0 * 8.0 / wConn.cc.dcb.BaudRate * 1000.0;
-	wConn.TO1 = wConn.TO3 * MAX_MISS * 1000.0;
-	wConn.TO2 = 5.0 * 8.0 / wConn.cc.dcb.BaudRate * 1000.0;
-	wConn.TO4 = (rand() % 4 + 1) * 8.0 / wConn.cc.dcb.BaudRate * 1000.0;
+	wConn.TO3 = 1200.0 * 8.0 / wConn.cc.dcb.BaudRate;
+	wConn.TO1 = wConn.TO3 * MAX_MISS;
+	wConn.TO2 = 5.0 * 8.0 / wConn.cc.dcb.BaudRate;
+	wConn.TO4 = (rand() % 4 + 1) * 8.0 / wConn.cc.dcb.BaudRate;
 
 	return true;
 }
