@@ -48,7 +48,24 @@ DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
 
 	while (wConn.status == WConn::IDLE)
 	{
-		PrintToScreen(CHAT_LOG_RX, ReadChar(5000), false, true);
+        if( !ReadChar( ENQ, 5000 ) ) continue;
+		PrintToScreen(CHAT_LOG_RX, ENQ, false, true);
+        SendChar( ACK );
+        do
+        {
+            ReadPacket();
+            if( ValidatePacket( wConn.buffer_rx_packet.front() ) )
+            {
+                SendChar( ACK );
+            }
+            else
+            {
+                SendChar( NAK );
+            }
+
+        }
+        while( !wConn.buffer_rx_ctrl.empty()
+            && wConn.buffer_rx_packet.front().ctrl == ETB );
 	}
 
 	wConn.buffer_rx_packet.clear();
@@ -129,9 +146,11 @@ bool ReadChar(char expectedChar, DWORD timeout)
 --
 -- SOURCE: http://msdn.microsoft.com/en-us/library/ff802693.aspx
 ----------------------------------------------------------------------------------------------------------------------*/
-bool ReadPacket(DWORD timeout)
+bool ReadPacket()
 {
 	WConn& wConn = GetWConn();
+    
+    char buffer[PACKET_DATA_SIZE];
 
 	DWORD nBytesRead, dwEvent, dwError;
 	COMSTAT cs;
@@ -143,7 +162,7 @@ bool ReadPacket(DWORD timeout)
 	}
 
 	timeouts.ReadIntervalTimeout = MAXDWORD;
-	timeouts.ReadTotalTimeoutConstant = timeout;
+    timeouts.ReadTotalTimeoutConstant = wConn.TO1;
 
 	// set timeouts
 	if (!SetCommTimeouts(wConn.hComm, &timeouts))
@@ -154,77 +173,35 @@ bool ReadPacket(DWORD timeout)
 	GrapefruitPacket g;
 	bool packetRead = false;
 
-	if (WaitCommEvent(wConn.hComm, &dwEvent, NULL))
-	{
-		ClearCommError(wConn.hComm, &dwError, &cs);
+	ClearCommError(wConn.hComm, &dwError, &cs);
 
-		do
-		{
-			if (ReadFile(wConn.hComm, &g.ctrl, 1, &nBytesRead, NULL))
-			{
-				//if the data in the buffer is a packet
-				if (g.ctrl == EOT || g.ctrl == ETB)
-				{
-					//check sync bits
-					if (ReadFile(wConn.hComm, &g.sync, 1, &nBytesRead, NULL))
-					{
-						//if the sync bit is OK
-						if (SyncTracker::CheckSync(g.sync))
-						{
-							//if you successfully read the packet in
-							if (ReadFile(wConn.hComm, g.data, PACKET_DATA_SIZE, &nBytesRead, NULL))
-							{
-								packetRead = true;
-								PrintToScreen(CHAT_LOG_RX, string(reinterpret_cast<char*>(g.data)), false, true);
-							}
-						}
-					}
-					//if EOT, reset Sync Bit
-					if (g.ctrl == EOT)
-					{
-						SyncTracker::FlagForReset();
-					}
-				}
-				else
-				{
-					wConn.buffer_rx_ctrl.push_back(g.ctrl);
-
-					if (g.ctrl == ENQ)
-					{
-						SendChar(ACK);
-					}
-				}
-			}
-			else
-			{
-				//an error occured while reading in the file
-				break;
-			}
-		} while (g.data);
-			
-		//if a packet was read in
-		if (packetRead)
-		{
-			//if the packet is successfully validated
-			if (ValidatePacket(g))
-			{
-				PrintToScreen(CHAT_LOG_RX, string(reinterpret_cast<char*>(g.data)), false, true);
-				SendChar(ACK);
-			}
-			else
-			{
-				SendChar(NAK);
-			}
-		}
-	}
-	else
+    if (packetRead = ReadFile(wConn.hComm, buffer, PACKET_TOTAL_SIZE, &nBytesRead, NULL))
 	{
-		//error in WaitCommEvent
+           g.ctrl = buffer[0];
+           g.sync = buffer[1];
+           for( int i = 0; i < PACKET_DATA_SIZE; ++i )
+               g.data[i] = buffer[i + 2];
+           for( int i = 0; i < PACKET_CRC_SIZE; ++i )
+               g.crc[i] = buffer[i + 2 + PACKET_DATA_SIZE];
+
+           wConn.buffer_rx_packet.emplace_back( g );
+
+	    //if (SyncTracker::CheckSync(g.sync))
+	    //{
+	    //	//if you successfully read the packet in
+	    //	if (ReadFile(wConn.hComm, g.data, PACKET_DATA_SIZE, &nBytesRead, NULL))
+	    //	{
+	    //		packetRead = true;
+	    //		PrintToScreen(CHAT_LOG_RX, string(reinterpret_cast<char*>(g.data)), false, true);
+	    //	}
+	    //}
+		//if (g.ctrl == EOT)
+		//{
+		//    SyncTracker::FlagForReset();
+		//}
 	}
 
-	PurgeComm(wConn.hComm, PURGE_RXCLEAR);
-
-	return true;
+	return packetRead;
 }
 
 
@@ -248,7 +225,6 @@ bool ValidatePacket(GrapefruitPacket g)
 		return false;
 	}
 
-	crcInit();
 	unsigned long crcResult = crc(g.data, PACKET_DATA_SIZE);
 
 	ss << crcResult;

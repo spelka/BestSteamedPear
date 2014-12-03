@@ -237,6 +237,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 	{
 	case WM_CREATE:
 		srand((unsigned)time(NULL));
+        
+	    crcInit();
 
 		EnableMenuItem(mymenu, ID_CONNECT, MF_DISABLED);
 		DrawMenuBar(hwnd);

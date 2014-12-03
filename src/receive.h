@@ -18,6 +18,6 @@ class SyncTracker
 DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm);
 char ReadChar(DWORD timeout);
 bool ReadChar(char expectedChar, DWORD timeout);
-bool ReadPacket(DWORD timeout);
+bool ReadPacket();
 bool ValidatePacket(GrapefruitPacket g);
 #endif // LISTEN_H

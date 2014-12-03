@@ -157,7 +157,7 @@ bool SendPacket()
 {
 	WConn &wConn = GetWConn();
 	
-	char packet[1024];
+    char packet[PACKET_TOTAL_SIZE];
 
 	GrapefruitPacket& gfp = wConn.buffer_tx.front();
 

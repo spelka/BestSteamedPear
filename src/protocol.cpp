@@ -36,23 +36,9 @@ DWORD idReceiveThread;				// the reading thread handle identification
 HANDLE hTransmitThread;				// the transmitting thread handle
 DWORD idTransmitThread;				// the transmitting thread handle identification
 
-WConn InitializedWConn()
-{
-	WConn wConn;
-
-	wConn.hComm = NULL;
-	wConn.cc = { 0 };
-	wConn.lpszCommName = "(UNSET)";
-	wConn.TO1 = wConn.TO2 = wConn.TO3 = wConn.TO4 = 0;
-	wConn.status = WConn::DEAD;
-	wConn.canTransmit = wConn.rvi = wConn.synFlip = false;
-
-	return wConn;
-}
-
 WConn& GetWConn()
 {
-	static WConn wConn = InitializedWConn();
+	static WConn wConn;
 	return wConn;
 }
 
