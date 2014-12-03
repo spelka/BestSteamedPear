@@ -4,8 +4,8 @@
 #include <windows.h>
 #include <deque>
 
-#define PACKET_TOTAL_SIZE 1024 - 900
-#define PACKET_DATA_SIZE 1018 - 900
+#define PACKET_TOTAL_SIZE 1024
+#define PACKET_DATA_SIZE 1018
 #define PACKET_CRC_SIZE 4
 
 /*
