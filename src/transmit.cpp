@@ -59,17 +59,17 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 
 		//PrintToScreen(CHAT_LOG_TX, wConn.buffer_tx.size());
 
-		PrintToScreen(CHAT_LOG_RX, "RESPONSE: N     RWEKJNRWEIOHRHWE"+ response);
+		//PrintToScreen(CHAT_LOG_RX, "RESPONSE: N     RWEKJNRWEIOHRHWE"+ response);
 
 		if (response == ACK)
 		{
-			PrintToScreen(CHAT_LOG_RX, "ACKERINOS");
+			//PrintToScreen(CHAT_LOG_RX, "ACKERINOS");
 
 			Transmit();
 		}
 		else //Timed out
 		{
-			PrintToScreen(CHAT_LOG_TX, "Timed Out");
+			//PrintToScreen(CHAT_LOG_TX, "Timed Out");
 
 			ResetState();
 		}
@@ -233,16 +233,16 @@ void Transmit()
 		{
 			if (wConn.buffer_tx.empty()) break;
 
-			PrintToScreen(CHAT_LOG_TX, "Before send!");
+			//PrintToScreen(CHAT_LOG_TX, "Before send!");
 			SendPacket();
-			PrintToScreen(CHAT_LOG_TX, "After send!");
+			//PrintToScreen(CHAT_LOG_TX, "After send!");
 
 			response = ReadChar(wConn.TO3);
 
 			switch (response)
 			{
 			case ACK:
-				PrintToScreen(CHAT_LOG_TX, "ACK response!");
+				//PrintToScreen(CHAT_LOG_TX, "ACK response!");
 				wConn.buffer_tx.pop_front();
 				wConn.synFlip = !wConn.synFlip;
 				break;
@@ -259,7 +259,7 @@ void Transmit()
 		}
 		while (response == NUL && missCount < MAX_MISS);
 	}
-	PrintToScreen(CHAT_LOG_TX, "Resetting state!");
+	//PrintToScreen(CHAT_LOG_TX, "Resetting state!");
 	ResetState();
 }
 
