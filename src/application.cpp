@@ -591,9 +591,9 @@ void RedrawText(txtholder_idx whichHolder)
 			currTxt = "";
 
 			// append each string into the current local text buffer
-			for (unsigned i = 0; i < TextHolder::txtHolders[t].txtBuffer.size(); ++i)
+			for each (string s in TextHolder::txtHolders[t].txtBuffer)
 			{
-				currTxt += TextHolder::txtHolders[t].txtBuffer[i];
+				currTxt += s;
 			}
 
 			// draw final string
@@ -606,9 +606,9 @@ void RedrawText(txtholder_idx whichHolder)
 		currTxt = "";
 
 		// append each string into the current local text buffer
-		for (unsigned i = 0; i < TextHolder::txtHolders[whichHolder].txtBuffer.size(); ++i)
+		for each (string s in TextHolder::txtHolders[whichHolder].txtBuffer)
 		{
-			currTxt += TextHolder::txtHolders[whichHolder].txtBuffer[i];
+			currTxt += s;
 		}
 
 		// draw final string

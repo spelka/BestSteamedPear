@@ -48,11 +48,12 @@ DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
 
 	while (wConn.status == WConn::IDLE)
 	{
-        if( !ReadChar( ENQ, 5000 ) ) continue;
+        if( !ReadChar( ENQ, 3 ) ) continue;
         SendChar( ACK );
         do
         {
             ReadPacket();
+			/*
             if( ValidatePacket( wConn.buffer_rx_packet.front() ) )
             {
                 SendChar( ACK );
@@ -61,7 +62,8 @@ DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
             {
                 SendChar( NAK );
             }
-
+			*/
+			SendChar( ACK );
         }
         while( !wConn.buffer_rx_ctrl.empty()
             && wConn.buffer_rx_packet.front().ctrl == ETB );
@@ -115,7 +117,7 @@ char ReadChar(DWORD timeout)
 		return NUL;
 	}
 
-	PrintToScreen(CHAT_LOG_RX, ctrl);
+	if (ctrl != NUL) PrintToScreen(CHAT_LOG_RX, ctrl);
 
 	return ctrl;
 }
@@ -178,6 +180,8 @@ bool ReadPacket()
 
     if (packetRead = ReadFile(wConn.hComm, buffer, PACKET_TOTAL_SIZE, &nBytesRead, NULL))
 	{
+		if (nBytesRead > 0)
+		{
            g.ctrl = buffer[0];
            g.sync = buffer[1];
            for( int i = 0; i < PACKET_DATA_SIZE; ++i )
@@ -185,7 +189,15 @@ bool ReadPacket()
            for( int i = 0; i < PACKET_CRC_SIZE; ++i )
                g.crc[i] = buffer[i + 2 + PACKET_DATA_SIZE];
 
+		   PrintToScreen(CHAT_LOG_RX, "Packet Received:");
+
+		   for each (char c in buffer)
+		   {
+			   PrintToScreen(CHAT_LOG_RX, c);
+		   }
+
            wConn.buffer_rx_packet.emplace_back( g );
+		}
 
 	    //if (SyncTracker::CheckSync(g.sync))
 	    //{
