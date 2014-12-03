@@ -187,7 +187,12 @@ bool SendPacket()
 	//MessageBox(NULL, ss.str().c_str(), "", MB_OK);
 
 
-	bool fycj = WriteFile(wConn.hComm, packet, PACKET_TOTAL_SIZE, &wConn.cc.dwSize, NULL);
+	bool fycj = true;
+	
+	for (unsigned i = 0; i < PACKET_TOTAL_SIZE; ++i)
+	{
+		SendChar(packet[i]);
+	}
 
 	if(fycj)
 		{
