@@ -109,7 +109,7 @@ char ReadChar(DWORD timeout)
 	{
 		return NUL;
 	}
-	
+
 	ClearCommError(wConn.hComm, &dwError, &cs);
 
 	if (!ReadFile(wConn.hComm, &ctrl, 1, &nBytesRead, NULL))
@@ -153,9 +153,7 @@ bool ReadPacket()
 {
 	WConn& wConn = GetWConn();
     
-	char buffer_final[PACKET_DATA_SIZE];
     char buffer[PACKET_DATA_SIZE];
-	unsigned currChar = 0;
 
 	DWORD nBytesRead, dwEvent, dwError;
 	COMSTAT cs;
@@ -177,36 +175,44 @@ bool ReadPacket()
 
 	GrapefruitPacket g;
 	bool packetRead = false;
-	
-	SetCommMask (wConn.hComm, EV_RXCHAR);
-	while (wConn.status != WConn::DEAD) {
-		/* wait for event */
-		if (WaitCommEvent (wConn.hComm, &dwEvent, NULL)){
-			/* read all available bytes */
-			ClearCommError (wConn.hComm, &dwError, &cs);
-			if ((dwEvent & EV_RXCHAR) && cs.cbInQue) {
-				if (!ReadFile(wConn.hComm, buffer, cs.cbInQue, 
-							  &nBytesRead, NULL)){
-					/* handle error */
-				} /* end if (error reading bytes) */
-				else {
-					if (nBytesRead)
-					{
-						for (unsigned i = 0; i < nBytesRead; ++i)
-						{
-							buffer_final[i+currChar] = buffer[i];
-						}
-						currChar += nBytesRead;
-					}
-				}
-			}
-		} else {
-		}
-	} /* end while (reading bytes in loop) */
-	/* clean out any pending bytes in the receive buffer */
-	PurgeComm(wConn.hComm, PURGE_RXCLEAR);
 
-	PrintToScreen(CHAT_LOG_RX, string(buffer_final));
+	ClearCommError(wConn.hComm, &dwError, &cs);
+
+    if (packetRead = ReadFile(wConn.hComm, buffer, PACKET_TOTAL_SIZE, &nBytesRead, NULL))
+	{
+		if (nBytesRead > 0)
+		{
+           g.ctrl = buffer[0];
+           g.sync = buffer[1];
+           for( int i = 0; i < PACKET_DATA_SIZE; ++i )
+               g.data[i] = buffer[i + 2];
+           for( int i = 0; i < PACKET_CRC_SIZE; ++i )
+               g.crc[i] = buffer[i + 2 + PACKET_DATA_SIZE];
+
+		   PrintToScreen(CHAT_LOG_RX, "Packet Received:");
+
+		   for each (char c in buffer)
+		   {
+			   PrintToScreen(CHAT_LOG_RX, c);
+		   }
+
+           wConn.buffer_rx_packet.emplace_back( g );
+		}
+
+	    //if (SyncTracker::CheckSync(g.sync))
+	    //{
+	    //	//if you successfully read the packet in
+	    //	if (ReadFile(wConn.hComm, g.data, PACKET_DATA_SIZE, &nBytesRead, NULL))
+	    //	{
+	    //		packetRead = true;
+	    //		PrintToScreen(CHAT_LOG_RX, string(reinterpret_cast<char*>(g.data)), false, true);
+	    //	}
+	    //}
+		//if (g.ctrl == EOT)
+		//{
+		//    SyncTracker::FlagForReset();
+		//}
+	}
 
 	return packetRead;
 }
