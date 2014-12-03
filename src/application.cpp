@@ -230,8 +230,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 		;
 
 	WConn& wConn = GetWConn();
-    
-    static int newLines = 1;
+
 	string currMsg;
 
 	switch (Message)
@@ -325,10 +324,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			ClearScreen(CURRENT_MSG);
 			break;
 
-        case 0x0A:
-            ++newLines;
-			PrintToScreen(CURRENT_MSG, wParam);
-            break;
+		case VK_DOWN:
+			GetWConn().buffer_tx.clear();
+			MessageBox(NULL, "", "DELETE", MB_OK);
+			break;
 
 		default:
 			PrintToScreen(CURRENT_MSG, wParam);
@@ -499,9 +498,14 @@ void PrintToScreen(txtholder_idx whichHolder, std::string s, bool newlinebefore,
 	RedrawText(whichHolder);
 }
 
-void PrintToScreen(txtholder_idx whichHolder, char c)
+void PrintToScreen(txtholder_idx whichHolder, char c, bool newlinebefore, bool newlineafter)
 {
 	HDC hdc = GResources::GetDC();
+
+	if (newlinebefore)
+	{
+		TextHolder::txtHolders[whichHolder].txtBuffer.push_back("\n");
+	}
 
 	switch (c)
 	{
@@ -520,6 +524,11 @@ void PrintToScreen(txtholder_idx whichHolder, char c)
 
 	default:
 		TextHolder::txtHolders[whichHolder].txtBuffer.back().push_back(c);
+	}
+
+	if (newlineafter)
+	{
+		TextHolder::txtHolders[whichHolder].txtBuffer.push_back("\n");
 	}
 
 	ReleaseDC(hwnd, hdc); // Release device context

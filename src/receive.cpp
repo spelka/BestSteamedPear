@@ -88,7 +88,7 @@ char ReadChar(DWORD timeout)
 	//if you fail to read in a file, return NUL
 	ReadFile(wConn.hComm, &received, 1, NULL, &wConn.olap);
 
-	if (received != NUL) PrintToScreen(CHAT_LOG_RX, received);
+	if (received != NUL) PrintToScreen(CHAT_LOG_RX, received, false, true);
 	
 	return received;
 }
@@ -158,9 +158,10 @@ bool FillRxBuffer()
 							{
 
 								//if you successfully read the packet in
-								if (ReadFile(wConn.hComm, &g.data, PACKET_DATA_SIZE, NULL, &GetWConn().olap))
+								if (ReadFile(wConn.hComm, g.data, PACKET_DATA_SIZE, NULL, &GetWConn().olap))
 								{
 									packetRead = true;
+									PrintToScreen(CHAT_LOG_RX, string(reinterpret_cast<char*>(g.data)), false, true);
 								}
 							}
 						}
@@ -188,9 +189,7 @@ bool FillRxBuffer()
 				//if the packet is successfully validated
 				if (ValidateData(g))
 				{
-					stringstream ss;
-					ss << g.data;
-					PrintToScreen(CHAT_LOG_RX, ss.str());
+					PrintToScreen(CHAT_LOG_RX, string(reinterpret_cast<char*>(g.data)), false, true);
 					SendChar(ACK);
 				}
 				else

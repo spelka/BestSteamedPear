@@ -133,7 +133,7 @@ bool SendChar(char charToSend)
 {
 	WConn &wConn = GetWConn();
 
-	PrintToScreen(CHAT_LOG_TX, charToSend);
+	PrintToScreen(CHAT_LOG_TX, charToSend, false, true);
 
 	return WriteFile(wConn.hComm, &charToSend, 1, NULL, &wConn.olap);
 }
