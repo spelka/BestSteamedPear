@@ -136,9 +136,11 @@ bool SendChar(char charToSend)
 {
 	WConn &wConn = GetWConn();
 
+	OVERLAPPED olap = { 0 };
+
 	PrintToScreen(CHAT_LOG_TX, charToSend, false, true);
 
-	return WriteFile(wConn.hComm, &charToSend, 1, &wConn.cc.dwSize, NULL);
+	return WriteFile(wConn.hComm, &charToSend, 1, NULL, &olap);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -159,6 +161,7 @@ bool SendChar(char charToSend)
 bool SendPacket()
 {
 	WConn &wConn = GetWConn();
+	OVERLAPPED olap = { 0 };
 	
     char packet[PACKET_TOTAL_SIZE];
 
@@ -187,7 +190,7 @@ bool SendPacket()
 	//MessageBox(NULL, ss.str().c_str(), "", MB_OK);
 
 
-	bool fycj = WriteFile(wConn.hComm, packet, PACKET_TOTAL_SIZE, &wConn.cc.dwSize, NULL);
+	bool fycj = WriteFile(wConn.hComm, packet, PACKET_TOTAL_SIZE, NULL, &olap);
 
 	if(fycj)
 		{
