@@ -153,62 +153,69 @@ bool ReadPacket()
 {
 	WConn& wConn = GetWConn();
     
-	char buffer_final[PACKET_DATA_SIZE];
-    char buffer[PACKET_DATA_SIZE];
-	unsigned currChar = 0;
+	DWORD dwCommEvent;
+	DWORD dwRead;
+	DWORD dwOvRes;
+	char  chRead;
+	OVERLAPPED osReader = { 0 };
 
-	DWORD nBytesRead, dwEvent, dwError;
-	COMSTAT cs;
+	unsigned currBufferChar = 0;
+	char buffer[PACKET_DATA_SIZE];
 
-	//if the comm mask is successfully set to watch for receiving character events
 	if (!SetCommMask(wConn.hComm, EV_RXCHAR))
 	{
-		return false;
+		// Error setting communications event mask
 	}
 
-	timeouts.ReadIntervalTimeout = MAXDWORD;
-    timeouts.ReadTotalTimeoutConstant = wConn.TO1;
-
-	// set timeouts
-	if (!SetCommTimeouts(wConn.hComm, &timeouts))
+	if (!(osReader.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL)))
 	{
-		return false;
+		// Error creating overlapped event handle
 	}
 
-	GrapefruitPacket g;
-	bool packetRead = false;
-	
-	SetCommMask (wConn.hComm, EV_RXCHAR);
-	while (wConn.status != WConn::DEAD) {
-		/* wait for event */
-		if (WaitCommEvent (wConn.hComm, &dwEvent, NULL)){
-			/* read all available bytes */
-			ClearCommError (wConn.hComm, &dwError, &cs);
-			if ((dwEvent & EV_RXCHAR) && cs.cbInQue) {
-				if (!ReadFile(wConn.hComm, buffer, cs.cbInQue, 
-							  &nBytesRead, NULL)){
-					/* handle error */
-				} /* end if (error reading bytes) */
-				else {
-					if (nBytesRead)
+	for (;;)
+	{
+		if (WaitCommEvent(wConn.hComm, &dwCommEvent, NULL))
+		{
+			do
+			{
+				if (ReadFile(wConn.hComm, &chRead, PACKET_TOTAL_SIZE, &dwRead, &osReader))
+				{
+					// A byte has been read; process it
+					InvalidateRect(hwnd, NULL, TRUE);
+					buffer[currBufferChar] = chRead;
+					++currBufferChar;
+				}
+				else if (GetLastError() == ERROR_IO_PENDING)
+				{
+					GetOverlappedResult(wConn.hComm, &osReader, &dwOvRes, TRUE);
+					if (dwOvRes)
 					{
-						for (unsigned i = 0; i < nBytesRead; ++i)
-						{
-							buffer_final[i+currChar] = buffer[i];
-						}
-						currChar += nBytesRead;
+						// A byte has been read; process it
+						buffer[currBufferChar] = chRead;
+						++currBufferChar;
 					}
 				}
-			}
-		} else {
+				else
+				{
+					// An error occurred in the ReadFile call
+					break;
+				}
+			} while (dwRead);
 		}
-	} /* end while (reading bytes in loop) */
-	/* clean out any pending bytes in the receive buffer */
-	PurgeComm(wConn.hComm, PURGE_RXCLEAR);
+		else
+		{
+			// Error in WaitCommEvent
+			break;
+		}
 
-	PrintToScreen(CHAT_LOG_RX, string(buffer_final));
+		dwCommEvent = dwRead = chRead = NULL; // reset the variables for the next read
+	}
 
-	return packetRead;
+	CloseHandle(osReader.hEvent);
+
+	PrintToScreen(CHAT_LOG_RX, string(buffer));
+
+	return true;
 }
 
 
