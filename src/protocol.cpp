@@ -30,12 +30,6 @@ using namespace std;
 
 //////
 
-HANDLE hReceiveThread;				// the reading thread handle
-DWORD idReceiveThread;				// the reading thread handle identification
-
-HANDLE hTransmitThread;				// the transmitting thread handle
-DWORD idTransmitThread;				// the transmitting thread handle identification
-
 WConn& GetWConn()
 {
 	static WConn wConn;
@@ -75,13 +69,13 @@ bool Connect()
 		return false;
 	}
 
-	if (!(hReceiveThread = CreateThread(NULL, 0, ReceiveThread, (LPVOID)NULL, 0, &idReceiveThread)))
+	if (!(wConn.hReceiveThread = CreateThread(NULL, 0, ReceiveThread, (LPVOID)NULL, 0, &wConn.idReceiveThread)))
 	{
 		MessageBox(hwnd, "Error creating comm port reading thread", "", MB_OK);
 		return false;
 	}
 
-	if (!(hTransmitThread = CreateThread(NULL, 0, TransmitThread, (LPVOID)NULL, 0, &idTransmitThread)))
+	if (!(wConn.hTransmitThread = CreateThread(NULL, 0, TransmitThread, (LPVOID)NULL, 0, &wConn.idTransmitThread)))
 	{
 		MessageBox(hwnd, "Error creating comm port transmitting thread", "", MB_OK);
 		return false;
@@ -95,7 +89,7 @@ bool Disconnect()
 	WConn& wConn = GetWConn();
 
 	wConn.status = WConn::DEAD;
-	CancelSynchronousIo(hReceiveThread);
-	CancelSynchronousIo(hTransmitThread);
-	return (CloseHandle(hReceiveThread) && CloseHandle(hTransmitThread) && CloseHandle(wConn.hComm));
+	CancelSynchronousIo(wConn.hReceiveThread);
+	CancelSynchronousIo(wConn.hTransmitThread);
+	return (CloseHandle(wConn.hReceiveThread) && CloseHandle(wConn.hTransmitThread) && CloseHandle(wConn.hComm));
 }

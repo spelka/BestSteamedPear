@@ -49,7 +49,6 @@ DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
 	while (wConn.status == WConn::IDLE)
 	{
         if( !ReadChar( ENQ, 5000 ) ) continue;
-		PrintToScreen(CHAT_LOG_RX, ENQ, false, true);
         SendChar( ACK );
         do
         {
@@ -115,6 +114,8 @@ char ReadChar(DWORD timeout)
 	{
 		return NUL;
 	}
+
+	PrintToScreen(CHAT_LOG_RX, ctrl);
 
 	return ctrl;
 }

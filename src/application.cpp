@@ -335,6 +335,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 
 			if (currMsg.empty()) break;
 
+			CancelSynchronousIo(wConn.hReceiveThread);
 			SendChar(ENQ);
 
 			Packetize(currMsg);

@@ -56,6 +56,12 @@ struct WConn
 	COMMCONFIG cc;
 	LPCSTR lpszCommName;
 
+	HANDLE hReceiveThread;				// the reading thread handle
+	DWORD idReceiveThread;				// the reading thread handle identification
+
+	HANDLE hTransmitThread;				// the transmitting thread handle
+	DWORD idTransmitThread;				// the transmitting thread handle identification
+
 	std::deque<char> buffer_rx_ctrl;
 	std::deque<GrapefruitPacket> buffer_rx_packet;
 	std::deque<GrapefruitPacket> buffer_tx;
