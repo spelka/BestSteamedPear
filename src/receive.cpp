@@ -239,4 +239,5 @@ bool ValidatePacket(GrapefruitPacket g)
 	}
 
 	return false;
+
 }

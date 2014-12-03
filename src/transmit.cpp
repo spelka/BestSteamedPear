@@ -56,12 +56,15 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 
 		char response = ReadChar(wConn.TO2);
 
-		//PrintToScreen(CHAT_LOG_RX, response);
 
 		//PrintToScreen(CHAT_LOG_TX, wConn.buffer_tx.size());
 
+		PrintToScreen(CHAT_LOG_RX, "RESPONSE: N     RWEKJNRWEIOHRHWE"+ response);
+
 		if (response == ACK)
 		{
+			PrintToScreen(CHAT_LOG_RX, "ACKERINOS");
+
 			Transmit();
 		}
 		else //Timed out
@@ -163,16 +166,35 @@ bool SendPacket()
 
 	packet[0] = gfp.ctrl;
 	packet[1] = gfp.sync;
+	PrintToScreen(CHAT_LOG_TX, "Packet:");
 	for (unsigned d = 0; d < PACKET_DATA_SIZE; ++d)
 	{
 		packet[d + 2] = gfp.data[d];
+		PrintToScreen(CHAT_LOG_TX, "PACKET DATA" + (gfp.data[d]));
 	}
 	for (unsigned c = 0; c < PACKET_CRC_SIZE; ++c)
 	{
 		packet[PACKET_TOTAL_SIZE - PACKET_CRC_SIZE + c] = gfp.crc[c];
+		stringstream pp;
+		pp << "CRC DATA" << gfp.data;
+
+		PrintToScreen(CHAT_LOG_TX, pp.str());
 	}
 
-	return WriteFile(wConn.hComm, packet, PACKET_TOTAL_SIZE, &wConn.cc.dwSize, NULL);
+	stringstream ss;
+	ss << " muh dick" << string(packet);
+
+	//MessageBox(NULL, ss.str().c_str(), "", MB_OK);
+
+
+	bool fycj = WriteFile(wConn.hComm, packet, PACKET_TOTAL_SIZE, &wConn.cc.dwSize, NULL);
+
+	if(fycj)
+		{
+			//MessageBox(NULL, "penis" , "", MB_OK);
+	}
+
+	return fycj;
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -206,28 +228,33 @@ void Transmit()
 		{
 			if (wConn.buffer_tx.empty()) break;
 
+			PrintToScreen(CHAT_LOG_TX, "Before send!");
 			SendPacket();
+			PrintToScreen(CHAT_LOG_TX, "After send!");
 
 			response = ReadChar(wConn.TO3);
 
 			switch (response)
 			{
 			case ACK:
+				PrintToScreen(CHAT_LOG_TX, "ACK response!");
 				wConn.buffer_tx.pop_front();
 				wConn.synFlip = !wConn.synFlip;
 				break;
 
 			case RVI:
+				PrintToScreen(CHAT_LOG_TX, "RVI response!");
 				wConn.canTransmit = !wConn.canTransmit;
 				return;
 
 			default:
+				PrintToScreen(CHAT_LOG_TX, "Missed!");
 				++missCount;
 			}
 		}
 		while (response == NUL && missCount < MAX_MISS);
 	}
-
+	PrintToScreen(CHAT_LOG_TX, "Resetting state!");
 	ResetState();
 }
 
