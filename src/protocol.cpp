@@ -89,8 +89,6 @@ VOID CALLBACK Timer::TimerCallBack(
 
 //////
 
-COMMCONFIG	cc;						// the communication config
-
 HANDLE hReceiveThread;				// the reading thread handle
 DWORD idReceiveThread;				// the reading thread handle identification
 
@@ -107,19 +105,17 @@ bool Configure(LPCSTR lpszCommName)
 {
 	WConn& wConn = GetWConn();
 	wConn.lpszCommName = lpszCommName;
-	wConn.olap = { 0 };
 
-	cc.dwSize = sizeof(COMMCONFIG);
-	cc.wVersion = 0x100;
-	GetCommConfig(wConn.hComm, &cc, &cc.dwSize);
-	if (!CommConfigDialog(wConn.lpszCommName, hwnd, &cc))
+	wConn.cc.dwSize = sizeof(COMMCONFIG);
+	GetCommConfig(wConn.hComm, &wConn.cc, &wConn.cc.dwSize);
+	if (!CommConfigDialog(wConn.lpszCommName, hwnd, &wConn.cc))
 		return false;
-	SetCommConfig(wConn.hComm, &cc, cc.dwSize);
+	SetCommState(wConn.hComm, &wConn.cc.dcb);
 
-	wConn.TO3 = 1200 * 8 / cc.dcb.BaudRate						* 1000;
-	wConn.TO1 = wConn.TO3 * MAX_MISS							* 1000;
-	wConn.TO2 = 5 * 8 / cc.dcb.BaudRate							* 1000;
-	wConn.TO4 = (rand() % 4 + 1) * 8 / cc.dcb.BaudRate			* 1000;
+	wConn.TO3 = 1200.0 * 8.0 / wConn.cc.dcb.BaudRate * 1000.0;
+	wConn.TO1 = wConn.TO3 * MAX_MISS * 1000.0;
+	wConn.TO2 = 5.0 * 8.0 / wConn.cc.dcb.BaudRate * 1000.0;
+	wConn.TO4 = (rand() % 4 + 1) * 8.0 / wConn.cc.dcb.BaudRate * 1000.0;
 
 	return true;
 }

@@ -48,10 +48,11 @@ struct GrapefruitPacket
 struct WConn
 {
 	HANDLE hComm;
-	OVERLAPPED olap;
+	COMMCONFIG cc;
 	LPCSTR lpszCommName;
 
-	std::deque<GrapefruitPacket> buffer_rx;
+	std::deque<char> buffer_rx_ctrl;
+	std::deque<GrapefruitPacket> buffer_rx_packet;
 	std::deque<GrapefruitPacket> buffer_tx;
 
 	unsigned

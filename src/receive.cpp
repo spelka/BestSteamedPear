@@ -48,7 +48,7 @@ DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
 
 	FillRxBuffer();
 
-	wConn.buffer_rx.clear();
+	wConn.buffer_rx_packet.clear();
 
 	return NULL;
 }
@@ -75,22 +75,16 @@ DWORD WINAPI ReceiveThread(LPVOID lpvThreadParm)
 char ReadChar(DWORD timeout)
 {
 	WConn& wConn = GetWConn();
-	
-	timeouts.ReadIntervalTimeout = timeout;
-	char received = NUL;
-	// set timeouts
-	if (!SetCommTimeouts(wConn.hComm, &timeouts))
-	{
-		// Error setting time-outs.
-	}
 
-	//read in character from comm port
-	//if you fail to read in a file, return NUL
-	ReadFile(wConn.hComm, &received, 1, NULL, &wConn.olap);
+	if (wConn.buffer_rx_ctrl.empty()) return NUL;
 
-	if (received != NUL) PrintToScreen(CHAT_LOG_RX, received, false, true);
+	char ctrl = wConn.buffer_rx_ctrl.front();
+
+	wConn.buffer_rx_ctrl.pop_front();
+
+	PrintToScreen(CHAT_LOG_RX, ctrl, false, true);
 	
-	return received;
+	return ctrl;
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -119,9 +113,8 @@ bool FillRxBuffer()
 {
 	WConn& wConn = GetWConn();
 
-	char buffer[PACKET_TOTAL_SIZE];
-	DWORD dwCommEvent;
-	DWORD dwRead = 0;
+	DWORD nBytesRead, dwEvent, dwError;
+	COMSTAT cs;
 
 	//if the comm mask is successfully set to watch for receiving character events
 	if (!SetCommMask(wConn.hComm, EV_RXCHAR))
@@ -133,32 +126,33 @@ bool FillRxBuffer()
 	// set timeouts
 	if (!SetCommTimeouts(wConn.hComm, &timeouts))
 	{
-		// Error setting time-outs.
+		return false;
 	}
 
-	for (;;)
+	while (wConn.isConnected)
 	{
 		GrapefruitPacket g;
 		bool packetRead = false;
 
-		if (WaitCommEvent(wConn.hComm, &dwCommEvent, NULL))
+		if (WaitCommEvent(wConn.hComm, &dwEvent, NULL))
 		{
+			ClearCommError(wConn.hComm, &dwError, &cs);
+
 			do
 			{
-				if (ReadFile(wConn.hComm, &g.ctrl, 1, NULL, &GetWConn().olap))
+				if (ReadFile(wConn.hComm, &g.ctrl, 1, &nBytesRead, NULL))
 				{
 					//if the data in the buffer is a packet
 					if (g.ctrl == EOT || g.ctrl == ETB)
 					{
 						//check sync bits
-						if (ReadFile(wConn.hComm, &g.sync, 1, NULL, &GetWConn().olap))
+						if (ReadFile(wConn.hComm, &g.sync, 1, &nBytesRead, NULL))
 						{
 							//if the sync bit is OK
 							if (SyncTracker::CheckSync(g.sync))
 							{
-
 								//if you successfully read the packet in
-								if (ReadFile(wConn.hComm, g.data, PACKET_DATA_SIZE, NULL, &GetWConn().olap))
+								if (ReadFile(wConn.hComm, g.data, PACKET_DATA_SIZE, &nBytesRead, NULL))
 								{
 									packetRead = true;
 									PrintToScreen(CHAT_LOG_RX, string(reinterpret_cast<char*>(g.data)), false, true);
@@ -171,9 +165,14 @@ bool FillRxBuffer()
 							SyncTracker::FlagForReset();
 						}
 					}
-					else if (g.ctrl == ENQ)
+					else
 					{
-						SendChar(ACK);
+						wConn.buffer_rx_ctrl.push_back(g.ctrl);
+
+						if (g.ctrl == ENQ)
+						{
+							SendChar(ACK);
+						}
 					}
 				}
 				else
@@ -204,6 +203,9 @@ bool FillRxBuffer()
 			break;
 		}
 	}
+
+	PurgeComm(wConn.hComm, PURGE_RXCLEAR);
+
 	return true;
 }
 

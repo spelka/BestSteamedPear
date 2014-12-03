@@ -295,22 +295,22 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			break;
 
 		case IDM_COM1:
-			wConn.lpszCommName = "com1";
+			wConn.lpszCommName = "COM1";
 			break;
 		case IDM_COM2:
-			wConn.lpszCommName = "com2";
+			wConn.lpszCommName = "COM2";
 			break;
 		case IDM_COM3:
-			wConn.lpszCommName = "com3";
+			wConn.lpszCommName = "COM3";
 			break;
 		case IDM_COM4:
-			wConn.lpszCommName = "com4";
+			wConn.lpszCommName = "COM4";
 			break;
 		case IDM_COM5:
-			wConn.lpszCommName = "com5";
+			wConn.lpszCommName = "COM5";
 			break;
 		case IDM_COM6:
-			wConn.lpszCommName = "com6";
+			wConn.lpszCommName = "COM6";
 			break;
 		}
 		break;
@@ -335,6 +335,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 
 			if (currMsg.empty()) break;
 
+			SendChar(ENQ);
+
 			Packetize(currMsg);
 
 			PrintToScreen(CHAT_LOG_TX, currMsg);
@@ -344,8 +346,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT Message,
 			break;
 
 		case VK_DOWN:
-			GetWConn().buffer_tx.clear();
-			MessageBox(NULL, "", "DELETE", MB_OK);
+			wConn.buffer_tx.clear();
+			MessageBox(hwnd, "", "DELETE", MB_OK);
 			break;
 
 		default:

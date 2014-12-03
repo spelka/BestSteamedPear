@@ -54,20 +54,20 @@ DWORD WINAPI TransmitThread(LPVOID lpvThreadParm)
 	{
 		if (wConn.buffer_tx.empty()) continue;
 
-		SendChar(ENQ);
-
 		char response = ReadChar(wConn.TO2);
 
 		//PrintToScreen(CHAT_LOG_RX, response);
 
 		//PrintToScreen(CHAT_LOG_TX, wConn.buffer_tx.size());
 
-		if (response != NUL)
+		if (response == ACK)
 		{
 			Transmit();
 		}
 		else //Timed out
 		{
+			PrintToScreen(CHAT_LOG_TX, "Timed Out");
+
 			ResetState();
 		}
 	}
@@ -135,7 +135,7 @@ bool SendChar(char charToSend)
 
 	PrintToScreen(CHAT_LOG_TX, charToSend, false, true);
 
-	return WriteFile(wConn.hComm, &charToSend, 1, NULL, &wConn.olap);
+	return WriteFile(wConn.hComm, &charToSend, 1, &wConn.cc.dwSize, NULL);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
@@ -172,7 +172,7 @@ bool SendPacket()
 		packet[PACKET_TOTAL_SIZE - PACKET_CRC_SIZE + c] = gfp.crc[c];
 	}
 
-	return WriteFile(wConn.hComm, packet, PACKET_DATA_SIZE, NULL, &wConn.olap);
+	return WriteFile(wConn.hComm, packet, PACKET_TOTAL_SIZE, &wConn.cc.dwSize, NULL);
 }
 
 /*------------------------------------------------------------------------------------------------------------------
