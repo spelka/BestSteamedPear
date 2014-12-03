@@ -45,7 +45,7 @@ bool Configure(LPCSTR lpszCommName)
 	GetCommConfig(wConn.hComm, &wConn.cc, &wConn.cc.dwSize);
 	if (!CommConfigDialog(wConn.lpszCommName, hwnd, &wConn.cc))
 		return false;
-	SetCommState(wConn.hComm, &wConn.cc.dcb);
+	SetCommConfig(wConn.hComm, &wConn.cc, wConn.cc.dwSize);
 
 	wConn.TO3 = 1200.0 * 8.0 / wConn.cc.dcb.BaudRate;
 	wConn.TO1 = wConn.TO3 * MAX_MISS;
@@ -61,9 +61,8 @@ bool Connect()
 
 	wConn.status = WConn::IDLE;
 
-	if ((wConn.hComm = CreateFile(wConn.lpszCommName, GENERIC_READ | GENERIC_WRITE, 0,
-		NULL, OPEN_EXISTING, NULL, NULL))
-		== INVALID_HANDLE_VALUE)
+	if ((wConn.hComm=CreateFile (wConn.lpszCommName, GENERIC_READ|GENERIC_WRITE, 
+			0, NULL, OPEN_EXISTING, 0, NULL)) == INVALID_HANDLE_VALUE)
 	{
 		MessageBox(hwnd, std::string("Error opening COM port: ").append(wConn.lpszCommName).c_str(), "", MB_OK);
 		return false;
