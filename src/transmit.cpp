@@ -248,12 +248,12 @@ void Transmit()
 				break;
 
 			case RVI:
-				PrintToScreen(CHAT_LOG_TX, "RVI response!");
+				//PrintToScreen(CHAT_LOG_TX, "RVI response!");
 				wConn.canTransmit = !wConn.canTransmit;
 				return;
 
 			default:
-				PrintToScreen(CHAT_LOG_TX, "Missed!");
+				//PrintToScreen(CHAT_LOG_TX, "Missed!");
 				++missCount;
 			}
 		}
